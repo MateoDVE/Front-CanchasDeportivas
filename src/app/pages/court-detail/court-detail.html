@@ -1,0 +1,43 @@
+<button
+  *ngFor="let time of timeSlots"
+
+  (click)="selectTime(time)"
+
+  [disabled]="availability[time] !== 'available'"
+
+  class="border rounded-xl py-3"
+
+  [ngClass]="{
+
+    'bg-emerald-600 text-white':
+      selectedStart === time,
+
+    'bg-white':
+      availability[time] === 'available'
+      && selectedStart !== time,
+
+    'bg-slate-100 text-slate-300 line-through cursor-not-allowed':
+      availability[time] === 'occupied',
+
+    'bg-slate-200 text-slate-400 cursor-not-allowed':
+      availability[time] === 'blocked'
+
+  }">
+
+  <div>
+    {{ time }}
+  </div>
+
+  <small>
+
+    {{
+      availability[time] === 'occupied'
+      ? 'Ocupado'
+      : availability[time] === 'blocked'
+      ? 'Bloqueado'
+      : getEndTime(time, duration)
+    }}
+
+  </small>
+
+</button>

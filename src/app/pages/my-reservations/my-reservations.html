@@ -1,0 +1,39 @@
+<div
+  *ngFor="let reservation of visibleReservations">
+
+  <h2>
+    {{ getCourt(reservation.courtId)?.name }}
+  </h2>
+
+  <p>
+    {{
+      getEstablishment(
+        reservation.courtId
+      )?.name
+    }}
+  </p>
+
+  <p>
+    {{ reservation.date }}
+  </p>
+
+  <p>
+    {{ reservation.startTime }}
+    -
+    {{
+      getEndTime(
+        reservation.startTime,
+        reservation.durationHours
+      )
+    }}
+  </p>
+
+  <p>
+    Bs {{ reservation.totalPrice }}
+  </p>
+
+  <p>
+    {{ reservation.reservationStatus }}
+  </p>
+
+</div>

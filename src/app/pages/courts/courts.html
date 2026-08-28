@@ -1,0 +1,354 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+
+<div class="mb-8">
+
+<h1 class="text-2xl font-bold text-slate-900">
+
+Explorar canchas
+
+</h1>
+
+<p class="text-slate-500 text-sm">
+
+Encuentra la cancha perfecta
+
+</p>
+
+</div>
+
+
+
+<div class="flex flex-col lg:flex-row gap-6">
+
+
+
+<!-- FILTROS -->
+
+<aside class="lg:w-64">
+
+
+<div class="bg-white rounded-2xl border p-5">
+
+
+<h2 class="font-bold mb-4">
+
+Filtros
+
+</h2>
+
+
+
+<label class="text-xs text-slate-500">
+
+Búsqueda
+
+</label>
+
+
+<input
+
+[(ngModel)]="search"
+
+placeholder="Buscar cancha..."
+
+class="w-full border rounded-xl px-3 py-2 mb-4">
+
+
+
+
+
+<label class="text-xs text-slate-500">
+
+Fecha
+
+</label>
+
+
+<input
+
+type="date"
+
+[(ngModel)]="filterDate"
+
+class="w-full border rounded-xl px-3 py-2 mb-4">
+
+
+
+
+
+
+<label class="text-xs text-slate-500">
+
+Tipo
+
+</label>
+
+
+<div class="flex flex-wrap gap-2 mb-4">
+
+
+<button
+
+(click)="filterType=''"
+
+class="px-3 py-1 rounded-full bg-slate-100 text-sm">
+
+
+Todos
+
+</button>
+
+
+<button
+
+*ngFor="let t of types"
+
+(click)="filterType=t"
+
+class="px-3 py-1 rounded-full bg-slate-100 text-sm">
+
+
+{{t}}
+
+</button>
+
+
+</div>
+
+
+
+
+
+<label class="text-xs text-slate-500">
+
+Establecimiento
+
+</label>
+
+
+<select
+
+[(ngModel)]="filterEst"
+
+class="w-full border rounded-xl px-3 py-2 mb-4">
+
+
+<option value="">
+
+Todos
+
+</option>
+
+
+<option
+
+*ngFor="let e of establishments"
+
+[value]="e.id">
+
+{{e.name}}
+
+</option>
+
+
+</select>
+
+
+
+
+
+
+<label class="text-xs text-slate-500">
+
+Precio máximo
+
+</label>
+
+
+<input
+
+type="range"
+
+min="40"
+
+max="150"
+
+step="10"
+
+[(ngModel)]="maxPrice"
+
+class="w-full">
+
+
+<span class="text-emerald-600">
+
+Bs {{maxPrice}}
+
+</span>
+
+
+</div>
+
+
+</aside>
+
+
+
+
+
+
+<!-- RESULTADOS -->
+
+
+<div class="flex-1">
+
+
+<p class="text-sm text-slate-500 mb-4">
+
+{{filtered.length}} canchas encontradas
+
+</p>
+
+
+
+
+
+<div
+
+*ngIf="filtered.length===0"
+
+class="text-center py-20">
+
+
+<div class="text-5xl">
+
+🏟️
+
+</div>
+
+
+<h3 class="font-bold">
+
+No se encontraron canchas
+
+</h3>
+
+
+</div>
+
+
+
+
+
+
+<div
+
+class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+
+<div
+
+*ngFor="let court of filtered"
+
+class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+
+
+
+<img
+
+[src]="court.images[0]"
+
+class="w-full h-44 object-cover">
+
+
+
+
+
+<div class="p-4">
+
+
+<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs">
+
+{{court.type}}
+
+</span>
+
+
+
+<h3 class="font-bold mt-3">
+
+{{court.name}}
+
+</h3>
+
+
+
+<p class="text-xs text-slate-500">
+
+{{getEst(court.establishmentId)?.name}}
+
+</p>
+
+
+
+<div class="flex justify-between items-center mt-4">
+
+
+<div>
+
+
+<span class="text-xs text-slate-400">
+
+Precio/hora
+
+</span>
+
+
+<div class="text-xl font-bold text-emerald-600">
+
+Bs {{court.pricePerHour}}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<button
+
+(click)="goDetail(court.id)"
+
+class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">
+
+
+Ver disponibilidad
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
