@@ -1,43 +1,682 @@
-<button
-  *ngFor="let time of timeSlots"
+<div
+  *ngIf="court && establishment"
+  class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+>
 
-  (click)="selectTime(time)"
+  <!-- VOLVER -->
+  <button
+    (click)="goBack()"
+    class="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6 transition-colors"
+  >
+    <span class="text-xl">‹</span>
+    Volver a canchas
+  </button>
 
-  [disabled]="availability[time] !== 'available'"
 
-  class="border rounded-xl py-3"
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-  [ngClass]="{
+    <!-- ===================================== -->
+    <!-- COLUMNA IZQUIERDA -->
+    <!-- ===================================== -->
 
-    'bg-emerald-600 text-white':
-      selectedStart === time,
+    <div class="lg:col-span-2 space-y-6">
 
-    'bg-white':
-      availability[time] === 'available'
-      && selectedStart !== time,
 
-    'bg-slate-100 text-slate-300 line-through cursor-not-allowed':
-      availability[time] === 'occupied',
+      <!-- GALERÍA -->
+      <div class="rounded-2xl overflow-hidden bg-slate-100">
 
-    'bg-slate-200 text-slate-400 cursor-not-allowed':
-      availability[time] === 'blocked'
+        <div class="aspect-[16/9] relative">
 
-  }">
+          <img
+            [src]="court.images[imgIndex]"
+            [alt]="court.name"
+            class="w-full h-full object-cover"
+          >
 
-  <div>
-    {{ time }}
+        </div>
+
+
+        <div
+          *ngIf="court.images.length > 1"
+          class="flex gap-2 p-3"
+        >
+
+          <button
+            *ngFor="let img of court.images; let i = index"
+            (click)="selectImage(i)"
+            class="w-16 h-12 rounded-lg overflow-hidden border-2 transition-all"
+            [ngClass]="
+              i === imgIndex
+                ? 'border-emerald-500'
+                : 'border-transparent opacity-60 hover:opacity-100'
+            "
+          >
+
+            <img
+              [src]="img"
+              alt=""
+              class="w-full h-full object-cover"
+            >
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- INFORMACIÓN DE CANCHA -->
+      <div
+        class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6"
+      >
+
+        <div
+          class="flex items-start justify-between mb-4"
+        >
+
+          <div>
+
+            <span
+              class="inline-block bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full mb-2"
+            >
+              {{ court.type }}
+            </span>
+
+            <h1
+              class="text-2xl font-bold text-slate-900"
+            >
+              {{ court.name }}
+            </h1>
+
+            <div
+              class="text-slate-500 text-sm mt-1"
+            >
+              ◉
+              {{ establishment.name }}
+              ·
+              {{ establishment.address }},
+              {{ establishment.city }}
+            </div>
+
+          </div>
+
+
+          <div class="text-right">
+
+            <div
+              class="text-slate-400 text-xs"
+            >
+              Precio / hora
+            </div>
+
+            <div
+              class="font-bold text-emerald-600 text-2xl"
+            >
+              Bs {{ court.pricePerHour }}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <p
+          class="text-slate-600 text-sm leading-relaxed mb-4"
+        >
+          {{ court.description }}
+        </p>
+
+
+        <!-- DATOS -->
+        <div
+          class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4"
+        >
+
+          <div class="bg-slate-50 rounded-xl p-3">
+
+            <div class="text-slate-400 text-xs">
+              Superficie
+            </div>
+
+            <div class="text-slate-800 font-semibold text-sm">
+              {{ court.surface }}
+            </div>
+
+          </div>
+
+
+          <div class="bg-slate-50 rounded-xl p-3">
+
+            <div class="text-slate-400 text-xs">
+              Jugadores
+            </div>
+
+            <div class="text-slate-800 font-semibold text-sm">
+              Hasta {{ court.maxPlayers }}
+            </div>
+
+          </div>
+
+
+          <div class="bg-slate-50 rounded-xl p-3">
+
+            <div class="text-slate-400 text-xs">
+              Teléfono
+            </div>
+
+            <div class="text-slate-800 font-semibold text-sm">
+              {{ establishment.phone }}
+            </div>
+
+          </div>
+
+
+          <div class="bg-slate-50 rounded-xl p-3">
+
+            <div class="text-slate-400 text-xs">
+              Ciudad
+            </div>
+
+            <div class="text-slate-800 font-semibold text-sm">
+              {{ establishment.city }}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- CARACTERÍSTICAS -->
+
+        <div
+          class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2"
+        >
+          Características
+        </div>
+
+
+        <div class="flex flex-wrap gap-2">
+
+          <span
+            *ngFor="let feature of court.features"
+            class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full"
+          >
+            ✓ {{ feature }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ===================================== -->
+      <!-- CALENDARIO -->
+      <!-- ===================================== -->
+
+      <div
+        class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6"
+      >
+
+        <h2
+          class="font-bold text-slate-900 text-lg mb-5"
+        >
+          Seleccionar fecha y horario
+        </h2>
+
+
+        <!-- NAVEGACIÓN MES -->
+
+        <div
+          class="flex items-center justify-between mb-3"
+        >
+
+          <button
+            (click)="prevMonth()"
+            class="p-2 rounded-lg hover:bg-slate-100"
+          >
+            ‹
+          </button>
+
+
+          <span
+            class="font-semibold text-slate-900"
+          >
+            {{ months[calendarMonth] }}
+            {{ calendarYear }}
+          </span>
+
+
+          <button
+            (click)="nextMonth()"
+            class="p-2 rounded-lg hover:bg-slate-100"
+          >
+            ›
+          </button>
+
+        </div>
+
+
+        <!-- DÍAS SEMANA -->
+
+        <div
+          class="grid grid-cols-7 gap-1 mb-1"
+        >
+
+          <div
+            *ngFor="let dayName of days"
+            class="text-center text-xs font-semibold text-slate-400 py-1"
+          >
+            {{ dayName }}
+          </div>
+
+        </div>
+
+
+        <!-- DÍAS -->
+
+        <div
+          class="grid grid-cols-7 gap-1 mb-8"
+        >
+
+          <ng-container
+            *ngFor="let day of calendarDays; let i = index"
+          >
+
+            <div
+              *ngIf="day === null"
+              class="aspect-square"
+            ></div>
+
+
+            <button
+              *ngIf="day !== null"
+              (click)="selectDay(day)"
+              [disabled]="isPast(day)"
+              class="aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center"
+              [ngClass]="
+                isPast(day)
+                  ? 'text-slate-300 cursor-not-allowed'
+                  : isSelectedDay(day)
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+              "
+            >
+              {{ day }}
+            </button>
+
+          </ng-container>
+
+        </div>
+
+
+
+        <!-- DURACIÓN -->
+
+        <div class="mb-5">
+
+          <div
+            class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2"
+          >
+            Duración de la reserva
+          </div>
+
+
+          <div class="flex gap-2 flex-wrap">
+
+            <button
+              *ngFor="let d of [1, 1.5, 2, 2.5, 3]"
+              (click)="setDuration(d)"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border"
+              [ngClass]="
+                duration === d
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'border-slate-200 text-slate-600 hover:border-emerald-300'
+              "
+            >
+              {{ d }}h
+            </button>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- ================================= -->
+        <!-- HORARIOS -->
+        <!-- ================================= -->
+
+        <div>
+
+          <div
+            class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3"
+          >
+            Horarios disponibles —
+            {{ formattedLongDate }}
+          </div>
+
+
+          <div
+            class="grid grid-cols-3 sm:grid-cols-5 gap-2"
+          >
+
+            <button
+              *ngFor="let slot of timeSlots"
+              (click)="selectTime(slot)"
+              [disabled]="availability[slot] !== 'available'"
+              class="relative rounded-xl py-3 px-2 text-center transition-all border"
+              [ngClass]="{
+
+                'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed line-through':
+                  availability[slot] === 'occupied',
+
+                'bg-slate-900/5 border-slate-200 text-slate-400 cursor-not-allowed':
+                  availability[slot] === 'blocked',
+
+                'bg-emerald-600 border-emerald-600 text-white shadow-md':
+                  availability[slot] === 'available' &&
+                  selectedStart === slot,
+
+                'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50':
+                  availability[slot] === 'available' &&
+                  selectedStart !== slot
+
+              }"
+            >
+
+              <div class="text-sm font-semibold">
+                {{ slot }}
+              </div>
+
+
+              <div class="text-xs mt-0.5">
+
+                <ng-container
+                  *ngIf="availability[slot] === 'occupied'"
+                >
+                  Ocupado
+                </ng-container>
+
+
+                <ng-container
+                  *ngIf="availability[slot] === 'blocked'"
+                >
+                  Bloqueado
+                </ng-container>
+
+
+                <ng-container
+                  *ngIf="availability[slot] === 'available'"
+                >
+                  {{ getEndTime(slot, duration) }}
+                </ng-container>
+
+              </div>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- COLUMNA DERECHA -->
+    <!-- ===================================== -->
+
+    <div class="lg:col-span-1">
+
+      <div class="sticky top-24 space-y-4">
+
+
+        <!-- RESUMEN -->
+
+        <div
+          class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
+        >
+
+          <h3
+            class="font-bold text-slate-900 mb-4"
+          >
+            Resumen de reserva
+          </h3>
+
+
+          <div class="space-y-3 text-sm mb-5">
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Cancha
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{ court.name }}
+              </span>
+
+            </div>
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Tipo
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{ court.type }}
+              </span>
+
+            </div>
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Fecha
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{ formattedSelectedDate }}
+              </span>
+
+            </div>
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Inicio
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{ selectedStart || '—' }}
+              </span>
+
+            </div>
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Fin
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{
+                  selectedStart
+                    ? getEndTime(
+                        selectedStart,
+                        duration
+                      )
+                    : '—'
+                }}
+              </span>
+
+            </div>
+
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Duración
+              </span>
+
+              <span class="font-medium text-slate-900">
+                {{ duration }}h
+              </span>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- PRECIO -->
+
+          <div
+            class="border-t border-slate-100 pt-4 space-y-2 text-sm mb-5"
+          >
+
+            <div class="flex justify-between">
+
+              <span class="text-slate-500">
+                Bs {{ court.pricePerHour }}/h ×
+                {{ duration }}h
+              </span>
+
+              <span class="font-medium">
+                Bs {{ totalPrice }}
+              </span>
+
+            </div>
+
+
+            <div
+              class="flex justify-between font-semibold text-slate-900 text-base pt-2 border-t border-slate-100"
+            >
+
+              <span>Total</span>
+
+              <span>
+                Bs {{ totalPrice }}
+              </span>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- ANTICIPO -->
+
+          <div
+            class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5"
+          >
+
+            <div
+              class="text-xs font-semibold text-amber-700 mb-2"
+            >
+              Anticipo requerido (25%)
+            </div>
+
+
+            <div class="flex justify-between text-sm">
+
+              <span class="text-amber-600">
+                Anticipo mín.
+              </span>
+
+              <span class="font-bold text-amber-700">
+                Bs {{ advance | number:'1.0-0' }}
+              </span>
+
+            </div>
+
+
+            <div
+              class="flex justify-between text-sm mt-1"
+            >
+
+              <span class="text-amber-600">
+                Saldo pendiente
+              </span>
+
+              <span class="font-medium text-amber-700">
+                Bs {{ pendingBalance | number:'1.0-0' }}
+              </span>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- CONTINUAR -->
+
+          <button
+            (click)="continueBooking()"
+            [disabled]="!selectedStart"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+
+            {{
+              selectedStart
+                ? 'Continuar con la reserva'
+                : 'Selecciona un horario'
+            }}
+
+          </button>
+
+        </div>
+
+
+        <!-- INFORMACIÓN -->
+
+        <div
+          class="bg-slate-50 rounded-2xl border border-slate-100 p-4 text-xs text-slate-500 space-y-2"
+        >
+
+          <div class="flex gap-2">
+
+            <span class="text-emerald-500">
+              ✓
+            </span>
+
+            <span>
+              Tu reserva queda confirmada una vez
+              verificado el anticipo.
+            </span>
+
+          </div>
+
+
+          <div class="flex gap-2">
+
+            <span class="text-emerald-500">
+              ◷
+            </span>
+
+            <span>
+              El saldo restante se abona al llegar
+              al establecimiento.
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <small>
-
-    {{
-      availability[time] === 'occupied'
-      ? 'Ocupado'
-      : availability[time] === 'blocked'
-      ? 'Bloqueado'
-      : getEndTime(time, duration)
-    }}
-
-  </small>
-
-</button>
+</div>

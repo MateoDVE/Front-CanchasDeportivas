@@ -1,45 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import {
-  Court,
-  Establishment,
   courts,
   establishments,
-  timeSlots,
-  getCourtAvailability
+  getCourtAvailability,
+  timeSlots
 } from '../../data/mock';
 
 @Component({
   selector: 'app-court-detail',
   standalone: true,
-  imports: [
-    CommonModule
-  ],
+  imports: [CommonModule],
   templateUrl: './court-detail.html',
-  styleUrls: [
-    './court-detail.scss'
-  ]
+  styleUrls: ['./court-detail.scss']
 })
-export class CourtDetailComponent {
+export class CourtDetailComponent implements OnInit {
 
-  court!: Court;
-
-  establishment!: Establishment;
+  court: any;
+  establishment: any;
 
   selectedDate = '2026-08-20';
-
   selectedStart: string | null = null;
 
   duration = 1;
-
   imgIndex = 0;
 
-  today = new Date('2026-08-19');
+  today = new Date('2026-08-19T12:00:00');
 
   calendarMonth = 7;
-
   calendarYear = 2026;
 
   months = [
@@ -72,51 +62,45 @@ export class CourtDetailComponent {
   constructor(
     private router: Router,
     private route: ActivatedRoute
-  ) {
+  ) {}
 
-    this.loadCourt();
-  }
-
-  loadCourt(): void {
+  ngOnInit(): void {
 
     const courtId =
-      this.route.snapshot.paramMap.get('id') ?? 'c-1';
+      this.route.snapshot.paramMap.get('id') || 'c-1';
 
     this.court =
-      courts.find(c => c.id === courtId) ??
+      courts.find(c => c.id === courtId) ||
       courts[0];
 
     this.establishment =
       establishments.find(
         e => e.id === this.court.establishmentId
-      ) ??
+      ) ||
       establishments[0];
   }
 
   goBack(): void {
-
-    this.router.navigate([
-      '/courts'
-    ]);
+    this.router.navigate(['/courts']);
   }
 
-  get totalPrice(): number {
-
-    return this.court.pricePerHour *
-      this.duration;
-  }
-
-  get advance(): number {
-
-    return this.totalPrice * 0.25;
-  }
-
-  get availability() {
-
+  get availability(): Record<string, string> {
     return getCourtAvailability(
       this.court.id,
       this.selectedDate
     );
+  }
+
+  get totalPrice(): number {
+    return this.court.pricePerHour * this.duration;
+  }
+
+  get advance(): number {
+    return this.totalPrice * 0.25;
+  }
+
+  get pendingBalance(): number {
+    return this.totalPrice - this.advance;
   }
 
   get calendarDays(): (number | null)[] {
@@ -128,7 +112,7 @@ export class CourtDetailComponent {
         1
       ).getDay();
 
-    const total =
+    const totalDays =
       new Date(
         this.calendarYear,
         this.calendarMonth + 1,
@@ -137,37 +121,16 @@ export class CourtDetailComponent {
 
     return [
       ...Array(firstDay).fill(null),
-
       ...Array.from(
-        { length: total },
+        { length: totalDays },
         (_, i) => i + 1
       )
     ];
   }
 
-  selectDay(day: number): void {
-
-    const date =
-      new Date(
-        this.calendarYear,
-        this.calendarMonth,
-        day
-      );
-
-    if (date < this.today) {
-      return;
-    }
-
-    this.selectedDate =
-      this.formatDate(date);
-
-    this.selectedStart = null;
-  }
-
   formatDate(date: Date): string {
 
-    const year =
-      date.getFullYear();
+    const year = date.getFullYear();
 
     const month =
       String(date.getMonth() + 1)
@@ -180,26 +143,61 @@ export class CourtDetailComponent {
     return `${year}-${month}-${day}`;
   }
 
+  selectDay(day: number): void {
+
+    const date =
+      new Date(
+        this.calendarYear,
+        this.calendarMonth,
+        day,
+        12
+      );
+
+    if (this.isPast(day)) {
+      return;
+    }
+
+    this.selectedDate =
+      this.formatDate(date);
+
+    this.selectedStart = null;
+  }
+
   isSelectedDay(day: number): boolean {
 
     const date =
       new Date(
         this.calendarYear,
         this.calendarMonth,
-        day
+        day,
+        12
       );
 
-    return this.selectedDate ===
-      this.formatDate(date);
+    return (
+      this.selectedDate ===
+      this.formatDate(date)
+    );
   }
 
   isPast(day: number): boolean {
 
-    return new Date(
-      this.calendarYear,
-      this.calendarMonth,
-      day
-    ) < this.today;
+    const date =
+      new Date(
+        this.calendarYear,
+        this.calendarMonth,
+        day,
+        12
+      );
+
+    const today =
+      new Date(
+        this.today.getFullYear(),
+        this.today.getMonth(),
+        this.today.getDate(),
+        12
+      );
+
+    return date < today;
   }
 
   nextMonth(): void {
@@ -207,12 +205,12 @@ export class CourtDetailComponent {
     if (this.calendarMonth === 11) {
 
       this.calendarMonth = 0;
-
       this.calendarYear++;
 
     } else {
 
       this.calendarMonth++;
+
     }
   }
 
@@ -221,46 +219,54 @@ export class CourtDetailComponent {
     if (this.calendarMonth === 0) {
 
       this.calendarMonth = 11;
-
       this.calendarYear--;
 
     } else {
 
       this.calendarMonth--;
+
     }
   }
 
   getEndTime(
     start: string,
-    hours: number
+    duration: number
   ): string {
 
-    const [h, m] =
+    const [hours, minutes] =
       start.split(':').map(Number);
 
-    const total =
-      h * 60 +
-      m +
-      hours * 60;
+    const totalMinutes =
+      hours * 60 +
+      minutes +
+      duration * 60;
+
+    const endHours =
+      Math.floor(totalMinutes / 60);
+
+    const endMinutes =
+      totalMinutes % 60;
 
     return (
-      String(
-        Math.floor(total / 60)
-      ).padStart(2, '0')
-      +
-      ':'
-      +
-      String(
-        total % 60
-      ).padStart(2, '0')
+      String(endHours).padStart(2, '0') +
+      ':' +
+      String(endMinutes).padStart(2, '0')
     );
+  }
+
+  setDuration(value: number): void {
+
+    this.duration = value;
+
+    // Igual que React:
+    // cambiar duración deselecciona horario.
+    this.selectedStart = null;
   }
 
   selectTime(time: string): void {
 
     if (
-      this.availability[time] !==
-      'available'
+      this.availability[time] !== 'available'
     ) {
       return;
     }
@@ -269,6 +275,43 @@ export class CourtDetailComponent {
       this.selectedStart === time
         ? null
         : time;
+  }
+
+  selectImage(index: number): void {
+    this.imgIndex = index;
+  }
+
+  get formattedSelectedDate(): string {
+
+    const date =
+      new Date(
+        this.selectedDate + 'T12:00:00'
+      );
+
+    return date.toLocaleDateString(
+      'es-BO',
+      {
+        day: 'numeric',
+        month: 'short'
+      }
+    );
+  }
+
+  get formattedLongDate(): string {
+
+    const date =
+      new Date(
+        this.selectedDate + 'T12:00:00'
+      );
+
+    return date.toLocaleDateString(
+      'es-BO',
+      {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      }
+    );
   }
 
   continueBooking(): void {
@@ -281,22 +324,12 @@ export class CourtDetailComponent {
       ['/booking-flow'],
       {
         queryParams: {
-
           courtId: this.court.id,
-
           date: this.selectedDate,
-
-          startTime:
-            this.selectedStart,
-
-          duration:
-            this.duration,
-
-          totalPrice:
-            this.totalPrice,
-
-          advance:
-            this.advance
+          startTime: this.selectedStart,
+          duration: this.duration,
+          totalPrice: this.totalPrice,
+          advance: this.advance
         }
       }
     );
