@@ -363,58 +363,44 @@
 
             <button
               *ngFor="let slot of timeSlots"
+
               (click)="selectTime(slot)"
-              [disabled]="availability[slot] !== 'available'"
+
+              [disabled]="!canBookSlot(slot)"
+
               class="relative rounded-xl py-3 px-2 text-center transition-all border"
+
               [ngClass]="{
 
-                'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed line-through':
-                  availability[slot] === 'occupied',
+              'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed':
+              !canBookSlot(slot),
 
-                'bg-slate-900/5 border-slate-200 text-slate-400 cursor-not-allowed':
-                  availability[slot] === 'blocked',
+              'line-through':
+              availability[slot] === 'occupied',
 
-                'bg-emerald-600 border-emerald-600 text-white shadow-md':
-                  availability[slot] === 'available' &&
-                  selectedStart === slot,
+              'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed':
+              availability[slot] === 'blocked',
 
-                'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50':
-                  availability[slot] === 'available' &&
-                  selectedStart !== slot
+              'bg-emerald-600 border-emerald-600 text-white shadow-md':
+                canBookSlot(slot) &&
+                selectedStart === slot,
 
-              }"
-            >
+              'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50':
+                canBookSlot(slot) &&
+                selectedStart !== slot
 
-              <div class="text-sm font-semibold">
-                {{ slot }}
-              </div>
+  }"
+>
 
+  <div class="text-sm font-semibold">
+    {{ slot }}
+  </div>
 
-              <div class="text-xs mt-0.5">
+  <div class="text-xs mt-0.5">
+    {{ getSlotStatusText(slot) }}
+  </div>
 
-                <ng-container
-                  *ngIf="availability[slot] === 'occupied'"
-                >
-                  Ocupado
-                </ng-container>
-
-
-                <ng-container
-                  *ngIf="availability[slot] === 'blocked'"
-                >
-                  Bloqueado
-                </ng-container>
-
-
-                <ng-container
-                  *ngIf="availability[slot] === 'available'"
-                >
-                  {{ getEndTime(slot, duration) }}
-                </ng-container>
-
-              </div>
-
-            </button>
+              </button>
 
           </div>
 

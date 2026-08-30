@@ -84,10 +84,12 @@ export class CourtDetailComponent implements OnInit {
     this.router.navigate(['/courts']);
   }
 
-  get availability(): Record<string, string> {
-    return getCourtAvailability(
-      this.court.id,
-      this.selectedDate
+  get availability(): Record<
+  string,
+  'available' | 'occupied' | 'blocked'> {
+  return getCourtAvailability(
+    this.court.id,
+    this.selectedDate
     );
   }
 
@@ -254,27 +256,62 @@ export class CourtDetailComponent implements OnInit {
     );
   }
 
+  timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    return hours * 60 + minutes;
+  }
+
+  canBookSlot(start: string): boolean {
+
+  if (!this.availability[start]) {
+    return false;
+  }
+
+  const startMinutes = this.timeToMinutes(start);
+
+  const endMinutes =
+    startMinutes + this.duration * 60;
+
+  const closingMinutes = 23 * 60;
+
+  if (endMinutes > closingMinutes) {
+    return false;
+  }
+
+  const slotsToCheck = this.timeSlots.filter(slot => {
+
+    const slotMinutes =
+      this.timeToMinutes(slot);
+
+    return (
+      slotMinutes >= startMinutes &&
+      slotMinutes < endMinutes
+    );
+  });
+
+    return slotsToCheck.every(
+      slot =>
+        this.availability[slot] === 'available'
+    );
+  }
+
   setDuration(value: number): void {
 
     this.duration = value;
-
-    // Igual que React:
-    // cambiar duración deselecciona horario.
     this.selectedStart = null;
   }
 
   selectTime(time: string): void {
 
-    if (
-      this.availability[time] !== 'available'
-    ) {
-      return;
-    }
+  if (!this.canBookSlot(time)) {
+    return;
+  }
 
-    this.selectedStart =
-      this.selectedStart === time
-        ? null
-        : time;
+  this.selectedStart =
+    this.selectedStart === time
+      ? null
+      : time;
   }
 
   selectImage(index: number): void {
@@ -314,24 +351,52 @@ export class CourtDetailComponent implements OnInit {
     );
   }
 
+  getSlotStatusText(slot: string): string {
+
+  const status = this.availability[slot];
+
+  if (status === 'occupied') {
+    return 'Ocupado';
+  }
+
+  if (status === 'blocked') {
+    return 'Bloqueado';
+  }
+
+  if (!this.canBookSlot(slot)) {
+    return 'No disponible';
+  }
+
+  return this.getEndTime(
+    slot,
+    this.duration
+  );
+  }
+
   continueBooking(): void {
 
-    if (!this.selectedStart) {
-      return;
-    }
-
-    this.router.navigate(
-      ['/booking-flow'],
-      {
-        queryParams: {
-          courtId: this.court.id,
-          date: this.selectedDate,
-          startTime: this.selectedStart,
-          duration: this.duration,
-          totalPrice: this.totalPrice,
-          advance: this.advance
-        }
-      }
-    );
+  if (!this.selectedStart) {
+    return;
   }
+
+  // Validación final de seguridad
+  if (!this.canBookSlot(this.selectedStart)) {
+    this.selectedStart = null;
+    return;
+  }
+
+  this.router.navigate(
+    ['/booking-flow'],
+    {
+      queryParams: {
+        courtId: this.court.id,
+        date: this.selectedDate,
+        startTime: this.selectedStart,
+        duration: this.duration,
+        totalPrice: this.totalPrice,
+        advance: this.advance
+      }
+    }
+  );
+ }
 }
