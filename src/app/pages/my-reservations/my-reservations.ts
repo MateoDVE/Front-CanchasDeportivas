@@ -2,227 +2,224 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-import {
-  reservations,
-  courts,
-  establishments,
-  Reservation,
-  Court,
-  Establishment
-} from '../../data/mock';
 
 @Component({
   selector: 'app-my-reservations',
-
   standalone: true,
-
   imports: [
     CommonModule
   ],
-
-  templateUrl:
-    './my-reservations.html',
-
-  styleUrls: [
-    './my-reservations.scss'
-  ]
+  templateUrl: './my-reservations.html',
+  styleUrls: ['./my-reservations.scss']
 })
 export class MyReservationsComponent {
 
+
   activeFilter = 'all';
 
-  showCancelModal = false;
+  cancelId:string | null = null;
 
-  selectedReservation:
-    Reservation | null = null;
+  selectedReservation:any = null;
 
-  cancelledIds: string[] = [];
+  showCancelModal=false;
+
+
 
   filters = [
 
     {
-      key: 'all',
-      label: 'Todas'
+      key:'all',
+      label:'Todas'
     },
 
     {
-      key: 'confirmed',
-      label: 'Confirmadas'
+      key:'confirmed',
+      label:'Confirmadas'
     },
 
     {
-      key: 'pending',
-      label: 'Pendientes'
+      key:'pending',
+      label:'Pendientes'
     },
 
     {
-      key: 'finished',
-      label: 'Finalizadas'
+      key:'finished',
+      label:'Finalizadas'
     },
 
     {
-      key: 'cancelled',
-      label: 'Canceladas'
+      key:'cancelled',
+      label:'Canceladas'
     }
 
   ];
 
-  reservations: Reservation[] =
-    reservations;
 
-  courts: Court[] =
-    courts;
 
-  establishments: Establishment[] =
-    establishments;
+  reservations=[
+
+
+    {
+      id:'R-101',
+      court:'Cancha Futsal A',
+      establishment:'SportCenter Norte',
+      date:'2026-08-20',
+      startTime:'10:00',
+      durationHours:1,
+      totalPrice:80,
+      advanceAmount:20,
+      reservationStatus:'pending',
+      paymentStatus:'pending',
+      image:'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=600'
+    },
+
+
+    {
+      id:'R-102',
+      court:'Cancha Pádel Pro',
+      establishment:'Arena Deportiva',
+      date:'2026-08-10',
+      startTime:'18:00',
+      durationHours:2,
+      totalPrice:240,
+      advanceAmount:60,
+      reservationStatus:'confirmed',
+      paymentStatus:'paid',
+      image:'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600'
+    },
+
+
+    {
+      id:'R-103',
+      court:'Cancha Vóley Premium',
+      establishment:'Arena Deportiva',
+      date:'2026-07-30',
+      startTime:'16:00',
+      durationHours:1,
+      totalPrice:60,
+      advanceAmount:15,
+      reservationStatus:'finished',
+      paymentStatus:'paid',
+      image:'https://images.unsplash.com/photo-1518605368461-0b5d2a7f9f4d?w=600'
+    }
+
+  ];
+
+
 
   constructor(
-    private router: Router
-  ) {}
+    private router:Router
+  ){}
 
-  get visibleReservations(): Reservation[] {
 
-    const updated =
-      this.reservations.map(r => {
 
-        if (
-          this.cancelledIds.includes(r.id)
-        ) {
+  get visibleReservations(){
 
-          return {
-            ...r,
-            reservationStatus:
-              'cancelled' as const
-          };
-        }
+    return this.reservations.filter(r=>{
 
-        return r;
-      });
+      if(this.activeFilter==='all'){
+        return true;
+      }
 
-    if (
-      this.activeFilter === 'all'
-    ) {
+      return r.reservationStatus === this.activeFilter;
 
-      return updated;
-    }
+    });
 
-    return updated.filter(
-      r =>
-        r.reservationStatus ===
-        this.activeFilter
-    );
   }
 
-  changeFilter(
-    filter: string
-  ): void {
 
-    this.activeFilter =
-      filter;
+
+  changeFilter(filter:string){
+
+    this.activeFilter=filter;
+
   }
 
-  getCourt(
-    courtId: string
-  ): Court | undefined {
 
-    return this.courts.find(
-      c => c.id === courtId
-    );
-  }
-
-  getEstablishment(
-    courtId: string
-  ): Establishment | undefined {
-
-    const court =
-      this.getCourt(courtId);
-
-    if (!court) {
-      return undefined;
-    }
-
-    return this.establishments.find(
-      e =>
-        e.id ===
-        court.establishmentId
-    );
-  }
 
   getEndTime(
-    start: string,
-    duration: number
-  ): string {
+    start:string,
+    duration:number
+  ){
 
-    const [h, m] =
-      start.split(':')
-        .map(Number);
+    const [h,m]=start.split(':').map(Number);
+
 
     const total =
-      h * 60 +
-      m +
-      duration * 60;
+    h*60+m+(duration*60);
+
 
     return (
-      String(
-        Math.floor(total / 60)
-      ).padStart(2, '0')
+
+      String(Math.floor(total/60))
+      .padStart(2,'0')
+
       +
+
       ':'
+
       +
-      String(
-        total % 60
-      ).padStart(2, '0')
+
+      String(total%60)
+      .padStart(2,'0')
+
     );
+
   }
 
-  openCancel(
-    reservation: Reservation
-  ): void {
 
-    this.selectedReservation =
-      reservation;
 
-    this.showCancelModal =
-      true;
+  openCancel(reservation:any){
+
+    this.selectedReservation=reservation;
+
+    this.showCancelModal=true;
+
   }
 
-  closeModal(): void {
 
-    this.showCancelModal =
-      false;
 
-    this.selectedReservation =
-      null;
+  closeModal(){
+
+    this.selectedReservation=null;
+
+    this.showCancelModal=false;
+
   }
 
-  cancelReservation(): void {
 
-    if (
-      this.selectedReservation
-    ) {
 
-      this.cancelledIds.push(
-        this.selectedReservation.id
-      );
+  cancelReservation(){
+
+    if(this.selectedReservation){
+
+      this.selectedReservation.reservationStatus='cancelled';
+
     }
 
+
     this.closeModal();
+
   }
 
-  goCourts(): void {
+
+
+  newReservation(){
 
     this.router.navigate([
       '/courts'
     ]);
+
   }
 
-  goDetail(
-    courtId: string
-  ): void {
+
+
+  goDetail(id:string){
 
     this.router.navigate([
       '/court-detail',
-      courtId
+      id
     ]);
+
   }
 }
