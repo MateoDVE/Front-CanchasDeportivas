@@ -1,0 +1,332 @@
+<div class="min-h-screen flex">
+
+
+<!-- Imagen lateral -->
+
+<div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+
+
+<img
+
+src="https://images.unsplash.com/photo-1770085057829-97e7a45e1916?w=800"
+
+class="w-full h-full object-cover">
+
+
+<div class="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-emerald-900/50 to-slate-900/60">
+</div>
+
+
+
+<div class="absolute bottom-12 left-12 text-white">
+
+
+<div class="text-amber-400 text-xl mb-4">
+
+★★★★★
+
+</div>
+
+
+<p class="text-xl font-semibold">
+
+"Reservé mi cancha en menos de 2 minutos. ¡Increíble!"
+
+</p>
+
+
+<span class="text-emerald-300 text-sm">
+
+Ana Quiroga · La Paz
+
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Registro -->
+
+<div class="flex-1 flex items-center justify-center px-6 py-12">
+
+
+<div class="w-full max-w-sm">
+
+
+<button
+
+(click)="goHome()"
+
+class="text-slate-400 text-sm mb-8">
+
+← Volver al inicio
+
+</button>
+
+
+
+<h1 class="text-2xl font-bold text-slate-900 mb-1">
+
+Crear una cuenta
+
+</h1>
+
+
+<p class="text-slate-500 text-sm mb-8">
+
+Regístrate gratis y comienza a reservar
+
+</p>
+
+
+
+
+
+
+<form
+
+(ngSubmit)="handleSubmit()"
+
+class="space-y-4">
+
+
+
+
+
+<div>
+
+<label class="text-sm block mb-1">
+
+Nombre completo
+
+</label>
+
+
+<input
+
+[(ngModel)]="form.name"
+
+name="name"
+
+type="text"
+
+placeholder="Carlos Mendoza"
+
+required
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+<div>
+
+<label class="text-sm block mb-1">
+
+Teléfono
+
+</label>
+
+
+<input
+
+[(ngModel)]="form.phone"
+
+name="phone"
+
+type="tel"
+
+placeholder="+591 7X XXX XXX"
+
+required
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+<div>
+
+<label class="text-sm block mb-1">
+
+Correo electrónico
+
+</label>
+
+
+<input
+
+[(ngModel)]="form.email"
+
+name="email"
+
+type="email"
+
+placeholder="correo@ejemplo.com"
+
+required
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+<div>
+
+<label class="text-sm block mb-1">
+
+Contraseña
+
+</label>
+
+
+<input
+
+[(ngModel)]="form.password"
+
+name="password"
+
+type="password"
+
+placeholder="••••••••"
+
+required
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+<div>
+
+<label class="text-sm block mb-1">
+
+Confirmar contraseña
+
+</label>
+
+
+<input
+
+[(ngModel)]="form.confirmPassword"
+
+name="confirmPassword"
+
+type="password"
+
+placeholder="••••••••"
+
+required
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+
+<div class="flex gap-2 text-xs text-slate-500">
+
+
+<input
+
+type="checkbox"
+
+required>
+
+
+<span>
+
+Acepto los términos y condiciones y política de privacidad
+
+</span>
+
+
+</div>
+
+
+
+
+
+
+<button
+
+type="submit"
+
+class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl">
+
+
+<span *ngIf="!loading">
+
+Crear cuenta
+
+</span>
+
+
+<span *ngIf="loading">
+
+Creando cuenta...
+
+</span>
+
+
+</button>
+
+
+
+
+</form>
+
+
+
+
+
+
+<p class="text-center text-sm text-slate-500 mt-6">
+
+
+¿Ya tienes cuenta?
+
+
+<button
+
+(click)="goLogin()"
+
+class="text-emerald-600 font-semibold">
+
+Iniciar sesión
+
+</button>
+
+
+</p>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>

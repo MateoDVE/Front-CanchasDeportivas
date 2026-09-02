@@ -1,0 +1,359 @@
+<div class="container">
+
+
+<!-- HEADER -->
+
+<div class="header">
+
+<div>
+
+<h1>
+Mis reservas
+</h1>
+
+<p>
+Gestiona tus reservas activas e historial
+</p>
+
+</div>
+
+
+<button
+(click)="newReservation()">
+
+＋ Nueva reserva
+
+</button>
+
+
+</div>
+
+
+
+<!-- USER CARD -->
+
+
+<div class="user-card">
+
+
+<div class="avatar">
+CM
+</div>
+
+
+<div class="user-info">
+
+<h3>
+Carlos Mendoza
+</h3>
+
+<p>
+carlos@mail.com · +591 70123456
+</p>
+
+</div>
+
+
+
+<div class="stats">
+
+<div>
+<strong>
+5
+</strong>
+<span>
+Total
+</span>
+</div>
+
+
+<div>
+<strong>
+2
+</strong>
+<span>
+Activas
+</span>
+</div>
+
+
+<div>
+<strong>
+3
+</strong>
+<span>
+Historial
+</span>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- FILTROS -->
+
+
+<div class="filters">
+
+
+<button
+*ngFor="let f of filters"
+
+(click)="changeFilter(f.key)"
+
+[class.active]="activeFilter===f.key">
+
+{{f.label}}
+
+</button>
+
+
+</div>
+
+
+
+
+
+<!-- RESERVAS -->
+
+
+<div
+*ngIf="visibleReservations.length>0"
+class="reservations">
+
+
+<div
+class="reservation-card"
+
+*ngFor="let r of visibleReservations">
+
+
+<div class="line"></div>
+
+
+
+<div class="content">
+
+
+<div class="top">
+
+
+<img
+[src]="r.image">
+
+
+<div>
+
+<h3>
+{{r.court}}
+</h3>
+
+<p>
+{{r.establishment}}
+</p>
+
+
+</div>
+
+
+
+<span>
+{{r.id}}
+</span>
+
+
+</div>
+
+
+
+
+
+<div class="details">
+
+
+<div>
+
+<label>
+Fecha
+</label>
+
+<strong>
+{{r.date}}
+</strong>
+
+</div>
+
+
+
+<div>
+
+<label>
+Horario
+</label>
+
+<strong>
+
+{{r.startTime}}
+-
+{{getEndTime(r.startTime,r.durationHours)}}
+
+</strong>
+
+</div>
+
+
+
+<div>
+
+<label>
+Total
+</label>
+
+<strong>
+Bs {{r.totalPrice}}
+</strong>
+
+</div>
+
+
+
+<div>
+
+<label>
+Anticipo
+</label>
+
+<strong>
+Bs {{r.advanceAmount}}
+</strong>
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="actions">
+
+
+<span
+class="status">
+
+{{r.reservationStatus}}
+
+</span>
+
+
+
+<button
+(click)="goDetail(r.id)">
+
+Ver detalle
+
+</button>
+
+
+
+<button
+*ngIf="r.reservationStatus!=='finished' &&
+r.reservationStatus!=='cancelled'"
+
+(click)="openCancel(r)">
+
+Cancelar
+
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+</div>
+
+<!-- SIN RESERVAS -->
+
+<div
+*ngIf="visibleReservations.length===0"
+class="empty">
+
+📋
+
+<h3>
+No hay reservas
+</h3>
+
+
+<button
+(click)="newReservation()">
+
+Reservar cancha
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+<!-- MODAL CANCELAR -->
+
+
+<div
+class="modal"
+*ngIf="showCancelModal">
+
+
+<div class="modal-box">
+
+
+<h2>
+Cancelar reserva
+</h2>
+
+
+<p>
+¿Estás seguro de cancelar esta reserva?
+</p>
+
+
+<div class="modal-actions">
+
+
+<button
+(click)="closeModal()">
+
+Volver
+
+</button>
+
+
+<button
+(click)="cancelReservation()">
+
+Cancelar reserva
+
+</button>
+
+
+</div>
+
+
+</div>
+</div>
+</div>

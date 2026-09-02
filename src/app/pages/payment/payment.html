@@ -1,0 +1,461 @@
+<div class="max-w-lg mx-auto px-4 py-8">
+
+
+
+<button
+
+(click)="goBack()"
+
+class="text-slate-500 text-sm mb-8">
+
+← Volver al resumen
+
+</button>
+
+
+
+
+
+<!-- CONFIRMADO -->
+
+
+<div
+
+*ngIf="submitted"
+
+class="text-center">
+
+
+<div class="w-20 h-20 bg-amber-100 rounded-full mx-auto flex items-center justify-center text-4xl">
+
+⏳
+
+</div>
+
+
+
+<h2 class="text-xl font-bold mt-5">
+
+Comprobante enviado
+
+</h2>
+
+
+
+<p class="text-slate-500 text-sm mt-3">
+
+Tu anticipo de
+
+<strong>
+
+Bs {{advance}}
+
+</strong>
+
+está siendo verificado.
+
+</p>
+
+
+
+
+
+<div class="bg-amber-50 rounded-2xl p-5 mt-6 text-left">
+
+
+<p class="font-semibold text-amber-700">
+
+Pago pendiente de verificación
+
+</p>
+
+
+
+<div class="mt-3 text-sm space-y-2">
+
+
+<div class="flex justify-between">
+
+<span>
+
+Cancha
+
+</span>
+
+<strong>
+
+{{court.name}}
+
+</strong>
+
+</div>
+
+
+
+
+<div class="flex justify-between">
+
+<span>
+
+Horario
+
+</span>
+
+<strong>
+
+{{startTime}} - {{getEndTime()}}
+
+</strong>
+
+</div>
+
+
+
+
+<div class="flex justify-between">
+
+<span>
+
+Anticipo
+
+</span>
+
+<strong>
+
+Bs {{advance}}
+
+</strong>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<button
+
+(click)="goConfirmation()"
+
+class="w-full bg-emerald-600 text-white py-3 rounded-xl mt-6">
+
+Ver mi reserva
+
+</button>
+
+
+
+
+<button
+
+(click)="goReservations()"
+
+class="w-full text-slate-500 mt-4">
+
+Ir a mis reservas
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- FORMULARIO -->
+
+
+<div
+
+*ngIf="!submitted">
+
+
+<h1 class="text-2xl font-bold">
+
+Pagar anticipo
+
+</h1>
+
+
+<p class="text-slate-500 text-sm mb-8">
+
+Registra tu pago para confirmar la reserva
+
+</p>
+
+
+
+
+
+<div class="bg-emerald-600 rounded-2xl p-5 text-white mb-6">
+
+
+<div class="text-sm">
+
+Anticipo requerido
+
+</div>
+
+
+
+<div class="text-3xl font-bold">
+
+Bs {{advance}}
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<label class="text-sm font-semibold">
+
+Método de pago
+
+</label>
+
+
+
+
+<div class="grid grid-cols-3 gap-2 mt-3 mb-6">
+
+
+<button
+
+*ngFor="let m of methods"
+
+(click)="paymentMethod=m.id"
+
+class="border rounded-xl p-3"
+
+
+[ngClass]="paymentMethod===m.id ?
+'bg-emerald-50 border-emerald-400':
+'bg-white'">
+
+
+<div class="text-2xl">
+
+{{m.icon}}
+
+</div>
+
+
+<div class="text-xs">
+
+{{m.label}}
+
+</div>
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div
+
+*ngIf="paymentMethod==='QR'"
+
+class="bg-slate-50 rounded-xl p-5 text-center mb-5">
+
+
+<div class="text-lg">
+
+▦
+
+</div>
+
+
+<p>
+
+Escanea el código QR
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div
+
+*ngIf="paymentMethod==='transfer'"
+
+class="bg-slate-50 rounded-xl p-5 mb-5">
+
+
+<p>
+
+Banco Unión
+
+</p>
+
+
+<p>
+
+Cuenta: 1234567890
+
+</p>
+
+
+<p>
+
+Titular: {{establishment.name}}
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<input
+
+type="number"
+
+[(ngModel)]="amount"
+
+placeholder="Monto pagado"
+
+class="w-full border rounded-xl px-4 py-3 mb-4">
+
+
+
+
+
+<input
+
+type="date"
+
+[(ngModel)]="payDate"
+
+class="w-full border rounded-xl px-4 py-3 mb-4">
+
+
+
+
+
+
+<input
+
+*ngIf="paymentMethod!=='cash'"
+
+type="text"
+
+[(ngModel)]="reference"
+
+placeholder="Número de referencia"
+
+class="w-full border rounded-xl px-4 py-3 mb-4">
+
+
+
+
+
+
+
+<label class="block text-sm mb-2">
+
+Comprobante de pago
+
+</label>
+
+
+
+<input
+
+type="file"
+
+(change)="selectFile($event)"
+
+class="w-full mb-5">
+
+
+
+
+
+<div
+
+*ngIf="fileName"
+
+class="text-emerald-600 text-sm mb-4">
+
+✓ {{fileName}}
+
+</div>
+
+
+
+
+
+
+
+<button
+
+(click)="submitPayment()"
+
+[disabled]="loading"
+
+class="w-full bg-emerald-600 text-white py-3.5 rounded-xl">
+
+
+<span *ngIf="!loading">
+
+Enviar comprobante
+
+</span>
+
+
+<span *ngIf="loading">
+
+Enviando...
+
+</span>
+
+
+
+</button>
+
+
+
+</div>
+
+
+
+</div>

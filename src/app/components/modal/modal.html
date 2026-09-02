@@ -1,0 +1,54 @@
+@if(open){
+
+
+<div class="overlay"
+(click)="closeModal()"
+>
+
+
+
+<div class="modal"
+(click)="$event.stopPropagation()"
+>
+
+
+<div class="header">
+
+
+<h3>
+
+{{title}}
+
+</h3>
+
+
+<button
+(click)="closeModal()"
+>
+
+×
+
+
+</button>
+
+
+</div>
+
+
+
+<div class="content">
+
+
+<ng-content></ng-content>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+}
