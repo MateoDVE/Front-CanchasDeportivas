@@ -1,0 +1,251 @@
+<div class="min-h-screen flex">
+
+
+<!-- Imagen lateral -->
+
+<div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+
+
+<img
+src="https://images.unsplash.com/photo-1775993167393-f2add1f8eec2?w=800"
+class="w-full h-full object-cover">
+
+
+<div class="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-emerald-900/50 to-slate-900/60">
+</div>
+
+
+<div class="absolute bottom-12 left-12 text-white">
+
+
+<p class="text-2xl font-bold">
+
+"La forma más fácil de reservar una cancha en Bolivia."
+
+</p>
+
+
+<span class="text-emerald-300 text-sm">
+
+Carlos Mendoza · Usuario verificado
+
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- Formulario -->
+
+
+<div class="flex-1 flex items-center justify-center px-6">
+
+
+<div class="w-full max-w-sm">
+
+
+
+<button
+(click)="goHome()"
+class="text-slate-500 text-sm mb-8">
+
+← Volver al inicio
+
+</button>
+
+
+
+
+<div class="flex items-center gap-3 mb-8">
+
+
+<div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+
+⌂
+
+</div>
+
+
+<span class="text-xl font-bold">
+
+SportReserva
+
+</span>
+
+
+</div>
+
+
+
+
+<h1 class="text-2xl font-bold text-slate-900">
+
+Bienvenido de vuelta
+
+</h1>
+
+
+<p class="text-slate-500 text-sm mb-8">
+
+Ingresa tus credenciales para continuar
+
+</p>
+
+
+
+
+
+<form
+(ngSubmit)="handleSubmit()"
+class="space-y-4">
+
+
+
+<div>
+
+
+<label class="block text-sm mb-2">
+
+Correo electrónico
+
+</label>
+
+
+<input
+
+type="email"
+
+[(ngModel)]="form.email"
+
+name="email"
+
+placeholder="correo@ejemplo.com"
+
+class="w-full border rounded-xl px-4 py-3">
+
+</div>
+
+
+
+
+
+<div>
+
+
+<label class="block text-sm mb-2">
+
+Contraseña
+
+</label>
+
+
+<input
+
+type="password"
+
+[(ngModel)]="form.password"
+
+name="password"
+
+placeholder="••••••••"
+
+class="w-full border rounded-xl px-4 py-3">
+
+
+</div>
+
+
+
+
+
+<button
+
+type="submit"
+
+class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl">
+
+
+<span *ngIf="!loading">
+
+Iniciar sesión
+
+</span>
+
+
+<span *ngIf="loading">
+
+Iniciando sesión...
+
+</span>
+
+
+</button>
+
+
+
+</form>
+
+
+
+
+
+<div class="my-5 text-center text-xs text-slate-400">
+
+o también
+
+</div>
+
+
+
+
+
+<button
+
+(click)="goAdmin()"
+
+class="w-full border rounded-xl py-3 text-slate-600">
+
+
+Entrar como Administrador
+
+
+</button>
+
+
+
+
+
+
+<p class="text-center text-sm text-slate-500 mt-6">
+
+
+¿No tienes cuenta?
+
+
+<button
+
+(click)="goRegister()"
+
+class="text-emerald-600 font-semibold">
+
+Crear una cuenta
+
+</button>
+
+
+</p>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>

@@ -1,0 +1,365 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+
+<button
+(click)="goBack()"
+class="text-slate-500 text-sm mb-8">
+
+← Volver a la cancha
+
+</button>
+
+
+
+
+<!-- PASOS -->
+
+
+<div class="flex items-center mb-8">
+
+
+<div
+class="flex-1 text-center"
+[ngClass]="step>=1?'text-emerald-600':'text-slate-300'">
+
+1. Datos
+
+</div>
+
+
+<div class="h-1 flex-1 bg-slate-200"></div>
+
+
+<div
+class="flex-1 text-center"
+[ngClass]="step>=2?'text-emerald-600':'text-slate-300'">
+
+2. Resumen
+
+</div>
+
+
+
+<div class="h-1 flex-1 bg-slate-200"></div>
+
+
+<div class="flex-1 text-center text-slate-300">
+
+3. Pago
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- RESUMEN CANCHA -->
+
+
+<div class="bg-emerald-50 rounded-2xl p-4 mb-6 flex gap-4">
+
+
+<img
+
+[src]="court.images[0]"
+
+class="w-16 h-16 rounded-xl object-cover">
+
+
+<div>
+
+<h3 class="font-bold">
+
+{{court.name}}
+
+</h3>
+
+
+<p class="text-sm text-slate-500">
+
+{{establishment.name}}
+
+·
+
+{{establishment.city}}
+
+</p>
+
+
+<p class="text-sm">
+
+{{startTime}} - {{getEndTime()}}
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- PASO 1 -->
+
+
+<div
+
+*ngIf="step===1"
+
+class="bg-white rounded-2xl border p-6">
+
+
+<h2 class="font-bold text-lg mb-5">
+
+Tus datos de contacto
+
+</h2>
+
+
+
+<div class="space-y-4">
+
+
+
+<input
+
+[(ngModel)]="form.name"
+
+class="w-full border rounded-xl px-4 py-3"
+
+placeholder="Nombre completo">
+
+
+
+
+
+<input
+
+[(ngModel)]="form.phone"
+
+class="w-full border rounded-xl px-4 py-3"
+
+placeholder="Teléfono">
+
+
+
+
+
+<input
+
+[(ngModel)]="form.email"
+
+class="w-full border rounded-xl px-4 py-3"
+
+placeholder="Correo">
+
+
+
+
+
+
+<textarea
+
+[(ngModel)]="form.notes"
+
+class="w-full border rounded-xl px-4 py-3"
+
+placeholder="Notas">
+
+</textarea>
+
+
+
+</div>
+
+
+
+
+<button
+
+(click)="continue()"
+
+class="w-full mt-6 bg-emerald-600 text-white py-3 rounded-xl">
+
+Continuar
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- PASO 2 -->
+
+
+<div
+
+*ngIf="step===2"
+
+class="bg-white rounded-2xl border p-6">
+
+
+<h2 class="font-bold text-lg mb-5">
+
+Confirmar reserva
+
+</h2>
+
+
+
+
+
+<div class="space-y-3 text-sm">
+
+
+<div class="flex justify-between">
+
+<span>
+Cancha
+</span>
+
+<strong>
+{{court.name}}
+</strong>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Fecha
+</span>
+
+<strong>
+{{date}}
+</strong>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Horario
+</span>
+
+<strong>
+{{startTime}} - {{getEndTime()}}
+</strong>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Cliente
+</span>
+
+<strong>
+{{form.name}}
+</strong>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="bg-slate-50 rounded-xl p-4 mt-5">
+
+
+<div class="flex justify-between">
+
+<span>Total</span>
+
+<strong>
+Bs {{totalPrice}}
+</strong>
+
+</div>
+
+
+
+<div class="flex justify-between text-emerald-600">
+
+<span>Anticipo 25%</span>
+
+<strong>
+Bs {{advance}}
+</strong>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<div class="flex gap-3 mt-6">
+
+
+<button
+
+(click)="back()"
+
+class="flex-1 border rounded-xl">
+
+Editar
+
+</button>
+
+
+
+<button
+
+(click)="goPayment()"
+
+class="flex-1 bg-emerald-600 text-white rounded-xl">
+
+Continuar pago
+
+</button>
+
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
