@@ -1,23 +1,37 @@
+export type CourtType = 'Futsal' | 'Wally' | 'Racket' | string;
+
 export interface Court {
+  id: number;
+  complexId: number;
+  name: string;
+  courtType: CourtType;
+  sportType?: string; // alias para compatibilidad
+  type?: string; // alias para compatibilidad de vistas
+  pricePerHour: number;
+  isActive: boolean;
+  description?: string;
+  images: string[];
+  features?: string[];
+  surface?: string;
+  surfaceType?: string;
+  hasLighting?: boolean;
+  maxPlayers?: number;
+}
 
-  id:number;
+export interface SlotAvailability {
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  status: 'AVAILABLE' | 'OCCUPIED' | 'TEMPORAL_HOLD';
+}
 
-  name:string;
-
-  type:string;
-
-  location:string;
-
-  description:string;
-
-  price:number;
-
-  image:string;
-
-  capacity:number;
-
-  services:string[];
-
-  available:boolean;
-
+export interface CourtAvailability {
+  courtId: number;
+  courtName: string;
+  date: string;
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: string | null;
+  closeTime: string | null;
+  slots: SlotAvailability[];
 }

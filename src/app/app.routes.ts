@@ -16,6 +16,13 @@ from './pages/booking-confirmation/booking-confirmation';
 import { MyReservationsComponent }
 from './pages/my-reservations/my-reservations';
 
+import { SecretaryDashboardComponent }
+from './pages/secretary/secretary-dashboard';
+
+import { AdminDashboardComponent }
+from './pages/admin/admin-dashboard';
+
+import { roleGuard } from './services/role.guard';
 
 export const routes: Routes = [
 
@@ -71,6 +78,20 @@ export const routes: Routes = [
 {
  path:'my-reservations',
  component:MyReservationsComponent
+},
+
+{
+  path:'secretary',
+  component:SecretaryDashboardComponent,
+  canActivate: [roleGuard],
+  data: { roles: ['SECRETARIA', 'ADMIN'] }
+},
+
+{
+  path:'admin',
+  component:AdminDashboardComponent,
+  canActivate: [roleGuard],
+  data: { roles: ['ADMIN'] }
 },
 
 

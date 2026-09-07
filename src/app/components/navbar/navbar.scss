@@ -230,6 +230,30 @@ display:none;
 
 
 
+.badge-link {
+  color: #059669 !important;
+  font-weight: 600 !important;
+  background: #ecfdf5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #d1fae5;
+  }
+
+  &.admin-link {
+    color: #4f46e5 !important;
+    background: #eef2ff;
+    border-color: #c7d2fe;
+
+    &:hover {
+      background: #e0e7ff;
+    }
+  }
+}
+
 @media(max-width:768px){
 
 

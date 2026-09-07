@@ -1,151 +1,66 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-
+import { ReservationService } from '../../services/reservation.service';
 
 @Component({
-
-selector:'app-booking-confirmation',
-
-standalone:true,
-
-imports:[
-CommonModule
-],
-
-templateUrl:'./booking-confirmation.html',
-
-styleUrls:[
-'./booking-confirmation.scss'
-]
-
+  selector: 'app-booking-confirmation',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './booking-confirmation.html',
+  styleUrls: ['./booking-confirmation.scss'],
 })
-export class BookingConfirmationComponent {
-
-
-
-reservationId =
-'R-' + Math.floor(Math.random()*900+100);
-
-
-
-court={
-
-name:'Cancha Futsal A',
-
-type:'Futsal'
-
-};
-
-
-
-establishment={
-
-name:'SportCenter Norte',
-
-address:'Av. Principal',
-
-city:'La Paz'
-
-};
-
-
-
-date='2026-08-20';
-
-startTime='10:00';
-
-duration=1;
-
-
-totalPrice=80;
-
-advance=20;
-
-
-
-constructor(
-
-private router:Router,
-
-private route:ActivatedRoute
-
-){
-
-
-this.route.queryParams.subscribe(params=>{
-
-
-this.date=params['date'] || this.date;
-
-this.startTime=params['startTime'] || this.startTime;
-
-
-});
-
-
-}
-
-
-
-
-
-
-getEndTime(){
-
-
-const [h,m]=this.startTime
-.split(':')
-.map(Number);
-
-
-const total=h*60+m+this.duration*60;
-
-
-return (
-
-String(Math.floor(total/60))
-.padStart(2,'0')
-
-+
-
-':'
-
-+
-
-String(total%60)
-.padStart(2,'0')
-
-);
-
-
-}
-
-
-
-
-
-
-goReservations(){
-
-this.router.navigate([
-'/my-reservations'
-]);
-
-}
-
-
-
-
-
-goHome(){
-
-this.router.navigate([
-''
-]);
-
-}
-
-
-
+export class BookingConfirmationComponent implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private reservationService = inject(ReservationService);
+
+  reservationId = '';
+  courtName = 'Cancha Deportiva';
+  establishmentName = 'Complejo Deportivo';
+  establishmentAddress = '';
+  date = '';
+  startTime = '';
+  endTime = '';
+  totalPrice = 0;
+  advance = 0;
+  balance = 0;
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      this.reservationId = params['reservationId'] || '';
+      this.courtName = params['courtName'] || this.courtName;
+      this.establishmentName = params['establishmentName'] || this.establishmentName;
+      this.date = params['date'] || this.date;
+      this.startTime = params['startTime'] || this.startTime;
+      this.endTime = params['endTime'] || this.endTime;
+      this.totalPrice = Number(params['totalPrice']) || 0;
+      this.advance = Number(params['advance']) || 0;
+      this.balance = Number((this.totalPrice - this.advance).toFixed(2));
+
+      if (this.reservationId) {
+        this.reservationService.getSummary(this.reservationId).subscribe({
+          next: (summary) => {
+            this.courtName = summary.courtName;
+            this.establishmentName = summary.complexName;
+            this.establishmentAddress = summary.complexAddress;
+            this.date = summary.reservationDate;
+            this.startTime = summary.startTime;
+            this.endTime = summary.endTime;
+            this.totalPrice = summary.totalPrice;
+            this.advance = summary.advanceRequired;
+            this.balance = summary.pendingBalance;
+          },
+        });
+      }
+    });
+  }
+
+  goReservations(): void {
+    this.router.navigate(['/my-reservations']);
+  }
+
+  goHome(): void {
+    this.router.navigate(['/']);
+  }
 }
