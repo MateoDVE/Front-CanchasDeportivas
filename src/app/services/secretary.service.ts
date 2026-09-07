@@ -83,7 +83,7 @@ export interface ReschedulePayload {
 
 export interface FinalPaymentPayload {
   amount: number;
-  paymentMethod: 'CASH' | 'QR';
+  paymentMethod: 'EFECTIVO' | 'QR' | 'CASH';
 }
 
 export interface CloseCashShiftPayload {
@@ -194,7 +194,11 @@ export class SecretaryService {
 
   // HU-SEC-15: Registrar pago restante (75%)
   registerFinalPayment(reservationId: string, payload: FinalPaymentPayload): Observable<any> {
-    return this.http.post(`${this.baseUrl}/reservations/${reservationId}/final-payment`, payload);
+    const normalizedPayload = {
+      ...payload,
+      paymentMethod: payload.paymentMethod === 'CASH' ? 'EFECTIVO' : payload.paymentMethod,
+    };
+    return this.http.post(`${this.baseUrl}/reservations/${reservationId}/final-payment`, normalizedPayload);
   }
 
   // HU-SEC-21: Registrar excepción de devolución
