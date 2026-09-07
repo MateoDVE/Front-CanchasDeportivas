@@ -1,7 +1,9 @@
-import { Component, Input, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, Input, computed, inject, signal } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmationService } from '../../services/confirmation.service';
 
 @Component({
   selector: 'app-navbar',
@@ -13,8 +15,39 @@ import { AuthService } from '../../services/auth.service';
 export class NavbarComponent {
   private router = inject(Router);
   authService = inject(AuthService);
+  private confirmation = inject(ConfirmationService);
 
-  @Input() currentPage: string = 'landing';
+  @Input() currentPage: string = '';
+
+  private currentUrl = signal<string>('');
+
+  constructor() {
+    this.currentUrl.set(this.router.url || '');
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.currentUrl.set(event.urlAfterRedirects || event.url);
+        this.mobileOpen = false;
+      }
+    });
+  }
+
+  activePage = computed(() => {
+    if (this.currentPage) return this.currentPage;
+    const url = (this.currentUrl() || this.router.url || '').split('?')[0];
+    if (url.startsWith('/admin')) return 'admin';
+    if (url.startsWith('/secretary')) return 'secretary';
+    if (url.startsWith('/my-reservations')) return 'my-reservations';
+    if (
+      url.startsWith('/courts') ||
+      url.startsWith('/court-detail') ||
+      url.startsWith('/booking') ||
+      url.startsWith('/payment')
+    ) {
+      return 'courts';
+    }
+    if (url === '/' || url === '') return 'landing';
+    return 'landing';
+  });
 
   isLoggedIn = computed(() => this.authService.isLoggedIn());
   user = computed(() => this.authService.currentUser());
@@ -33,6 +66,11 @@ export class NavbarComponent {
   });
 
   mobileOpen = false;
+
+  closeMenu(toggle: HTMLButtonElement): void {
+    this.mobileOpen = false;
+    toggle.focus();
+  }
 
   navigate(page: string): void {
     this.mobileOpen = false;
@@ -63,7 +101,12 @@ export class NavbarComponent {
     }
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Cerrar sesión',
+      message: '¿Quieres cerrar tu sesión de SportReserva? Tendrás que iniciar sesión para acceder a tu cuenta.',
+      confirmText: 'Cerrar sesión',
+    })) return;
     this.mobileOpen = false;
     this.authService.logout();
   }
