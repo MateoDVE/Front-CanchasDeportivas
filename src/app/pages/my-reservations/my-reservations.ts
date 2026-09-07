@@ -36,9 +36,9 @@ export class MyReservationsComponent implements OnInit {
   filters = [
     { key: 'all', label: 'Todas' },
     { key: 'confirmed', label: 'Confirmadas' },
-    { key: 'pending', label: 'Pendientes' },
+    { key: 'pending', label: 'En validación' },
     { key: 'finished', label: 'Finalizadas' },
-    { key: 'cancelled', label: 'Canceladas' },
+    { key: 'cancelled', label: 'Canceladas / Expiradas' },
   ];
 
   reservations: ClientReservationItem[] = [];
@@ -99,23 +99,41 @@ export class MyReservationsComponent implements OnInit {
     this.activeFilter = filter;
   }
 
-  getStatusBadge(status: string): { label: string; bg: string; text: string } {
+  formatCode(id: string): string {
+    if (!id) return '';
+    return id.length > 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase();
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T12:00:00');
+    if (isNaN(date.getTime())) return dateStr;
+    const formatted = date.toLocaleDateString('es-BO', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+
+  getStatusBadge(status: string): { label: string; bg: string; text: string; lineColor: string } {
     switch (status) {
       case 'CONFIRMED':
-        return { label: 'Confirmada', bg: 'bg-emerald-100', text: 'text-emerald-800' };
+        return { label: 'Confirmada', bg: 'bg-emerald-100', text: 'text-emerald-800', lineColor: '#10b981' };
       case 'PENDING_VALIDATION':
-        return { label: 'Validando pago', bg: 'bg-amber-100', text: 'text-amber-800' };
+        return { label: 'En validación', bg: 'bg-amber-100', text: 'text-amber-800', lineColor: '#f59e0b' };
       case 'TEMPORAL':
-        return { label: 'Bloqueo temporal', bg: 'bg-blue-100', text: 'text-blue-800' };
+        return { label: 'Bloqueo temporal', bg: 'bg-blue-100', text: 'text-blue-800', lineColor: '#3b82f6' };
       case 'CANCELLED':
-        return { label: 'Cancelada', bg: 'bg-rose-100', text: 'text-rose-800' };
+        return { label: 'Cancelada', bg: 'bg-rose-100', text: 'text-rose-800', lineColor: '#f43f5e' };
       case 'EXPIRED':
-        return { label: 'Expirada', bg: 'bg-slate-100', text: 'text-slate-600' };
+        return { label: 'Expirada', bg: 'bg-slate-100', text: 'text-slate-600', lineColor: '#cbd5e1' };
       case 'COMPLETED':
       case 'FINISHED':
-        return { label: 'Finalizada', bg: 'bg-purple-100', text: 'text-purple-800' };
+        return { label: 'Finalizada', bg: 'bg-purple-100', text: 'text-purple-800', lineColor: '#a855f7' };
       default:
-        return { label: status, bg: 'bg-slate-100', text: 'text-slate-700' };
+        return { label: status, bg: 'bg-slate-100', text: 'text-slate-700', lineColor: '#94a3b8' };
     }
   }
 

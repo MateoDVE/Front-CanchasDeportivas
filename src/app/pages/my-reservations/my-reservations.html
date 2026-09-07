@@ -30,7 +30,7 @@
       </div>
       <div>
         <strong>{{ historyCount }}</strong>
-        <span>Historial</span>
+        <span>Pasadas</span>
       </div>
     </div>
   </div>
@@ -58,12 +58,14 @@
   @if(!loading && visibleReservations.length > 0) {
     <div class="reservations">
       <div class="reservation-card" *ngFor="let r of visibleReservations">
-        <div class="line"></div>
+        <div class="line" [style.background]="getStatusBadge(r.status).lineColor"></div>
         <div class="content">
           <div class="top">
             <div>
               <h3>{{ r.courtName }}</h3>
-              <p class="text-xs text-slate-400">Código: {{ r.id }}</p>
+              <p class="text-xs text-slate-400" [title]="'ID completo: ' + r.id">
+                ID Reserva: <strong class="font-mono text-slate-600">#{{ formatCode(r.id) }}</strong>
+              </p>
             </div>
             <span
               class="px-2.5 py-1 rounded-full text-xs font-semibold"
@@ -76,14 +78,14 @@
           <div class="details">
             <div>
               <label>Fecha</label>
-              <strong>{{ r.reservationDate }}</strong>
+              <strong>{{ formatDate(r.reservationDate) }}</strong>
             </div>
             <div>
               <label>Horario</label>
               <strong>{{ r.startTime }} - {{ r.endTime }}</strong>
             </div>
             <div>
-              <label>Total pactado</label>
+              <label>Precio total</label>
               <strong>Bs {{ r.totalPrice }}</strong>
             </div>
             <div>
@@ -91,14 +93,14 @@
               <strong class="text-emerald-600">Bs {{ r.advanceRequired }}</strong>
             </div>
             <div>
-              <label>Saldo en puerta</label>
+              <label>Saldo pendiente</label>
               <strong class="text-slate-800">Bs {{ r.pendingBalance }}</strong>
             </div>
           </div>
 
           <div class="actions">
             <button (click)="goDetail(r.courtId)">
-              Ver cancha
+              🏟️ Ver cancha
             </button>
           </div>
         </div>

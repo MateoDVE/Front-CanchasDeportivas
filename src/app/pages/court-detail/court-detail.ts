@@ -102,8 +102,10 @@ export class CourtDetailComponent implements OnInit {
     this.courtService.getCourtAvailability(courtId, date).subscribe({
       next: (avail) => {
         this.serverAvailability = avail;
-        if (avail.slots && avail.slots.length > 0) {
-          this.timeSlots = avail.slots.map((s) => s.startTime);
+        if (avail && Array.isArray(avail.slots) && avail.slots.length > 0) {
+          this.timeSlots = avail.slots
+            .filter((s) => s && s.startTime)
+            .map((s) => s.startTime);
         }
       },
       error: (err) => {
@@ -118,8 +120,9 @@ export class CourtDetailComponent implements OnInit {
 
   get availability(): Record<string, 'available' | 'occupied' | 'blocked'> {
     const map: Record<string, 'available' | 'occupied' | 'blocked'> = {};
-    if (this.serverAvailability && this.serverAvailability.slots) {
+    if (this.serverAvailability && Array.isArray(this.serverAvailability.slots)) {
       for (const slot of this.serverAvailability.slots) {
+        if (!slot || !slot.startTime) continue;
         if (slot.status === 'AVAILABLE') {
           map[slot.startTime] = 'available';
         } else if (slot.status === 'TEMPORAL_HOLD') {
@@ -202,8 +205,9 @@ export class CourtDetailComponent implements OnInit {
   }
 
   getEndTime(start: string, duration: number): string {
+    if (!start) return '11:00';
     const [hours, minutes] = start.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes + duration * 60;
+    const totalMinutes = (hours || 0) * 60 + (minutes || 0) + duration * 60;
     const endHours = Math.floor(totalMinutes / 60);
     const endMinutes = totalMinutes % 60;
 
@@ -213,8 +217,9 @@ export class CourtDetailComponent implements OnInit {
   }
 
   timeToMinutes(time: string): number {
+    if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
+    return (hours || 0) * 60 + (minutes || 0);
   }
 
   canBookSlot(start: string): boolean {

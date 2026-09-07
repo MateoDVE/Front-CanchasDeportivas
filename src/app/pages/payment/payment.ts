@@ -127,23 +127,47 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   private loadReservationSummary(): void {
     this.reservationService.getSummary(this.reservationId).subscribe({
-      next: (summary) => {
-        this.court = { name: summary.courtName };
+      next: (summary: any) => {
+        if (!summary) return;
+        const courtName = summary.court?.name || summary.courtName || this.court?.name || 'Cancha Deportiva';
+        this.court = { name: courtName };
+
+        const complexName = summary.complex?.name || summary.complexName || this.establishment?.name || 'Complejo Deportivo';
+        const complexAddress = summary.complex?.location || summary.complexAddress || '';
         this.establishment = {
-          name: summary.complexName,
-          address: summary.complexAddress,
+          name: complexName,
+          address: complexAddress,
         };
-        this.totalPrice = summary.totalPrice;
-        this.advance = summary.advanceRequired;
-        this.balance = summary.pendingBalance;
+
+        if (summary.reservationDate) this.date = summary.reservationDate;
+        if (summary.startTime) this.startTime = summary.startTime;
+        if (summary.endTime) this.endTime = summary.endTime;
+
+        if (summary.totalPrice !== undefined) this.totalPrice = summary.totalPrice;
+        if (summary.advanceRequired !== undefined) this.advance = summary.advanceRequired;
+        if (summary.pendingBalance !== undefined) this.balance = summary.pendingBalance;
         this.amount = this.advance;
-        if (summary.complexQrUrl) {
-          this.qrImageUrl = summary.complexQrUrl;
+
+        const qr = summary.complex?.paymentQrUrl || summary.complexQrUrl;
+        if (qr) {
+          this.qrImageUrl = qr;
         }
-        if (summary.isExpired) {
+
+        const isExp =
+          summary.status === 'EXPIRED' ||
+          summary.isExpired === true ||
+          (summary.secondsRemaining !== undefined && summary.secondsRemaining <= 0);
+
+        if (isExp) {
           this.isExpired = true;
           this.secondsRemaining = 0;
+          if (this.timerInterval) clearInterval(this.timerInterval);
+        } else if (typeof summary.secondsRemaining === 'number') {
+          this.secondsRemaining = summary.secondsRemaining;
         }
+      },
+      error: (err) => {
+        console.error('Error al cargar resumen de reserva:', err);
       },
     });
   }
@@ -212,12 +236,18 @@ export class PaymentComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loading = false;
-        if (err.error && err.error.message) {
-          this.errorMessage = Array.isArray(err.error.message)
-            ? err.error.message.join(', ')
-            : err.error.message;
-        } else {
-          this.errorMessage = 'Error al enviar el comprobante de pago al servidor.';
+        const rawMsg = err.error?.message;
+        const msg = Array.isArray(rawMsg)
+          ? rawMsg.join(', ')
+          : rawMsg || 'Error al enviar el comprobante de pago al servidor.';
+        this.errorMessage = msg;
+        if (
+          msg.toLowerCase().includes('expir') ||
+          (err.status === 400 && msg.toLowerCase().includes('temporal'))
+        ) {
+          this.isExpired = true;
+          this.secondsRemaining = 0;
+          if (this.timerInterval) clearInterval(this.timerInterval);
         }
       },
     });

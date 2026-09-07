@@ -40,16 +40,17 @@ export class BookingConfirmationComponent implements OnInit {
 
       if (this.reservationId) {
         this.reservationService.getSummary(this.reservationId).subscribe({
-          next: (summary) => {
-            this.courtName = summary.courtName;
-            this.establishmentName = summary.complexName;
-            this.establishmentAddress = summary.complexAddress;
-            this.date = summary.reservationDate;
-            this.startTime = summary.startTime;
-            this.endTime = summary.endTime;
-            this.totalPrice = summary.totalPrice;
-            this.advance = summary.advanceRequired;
-            this.balance = summary.pendingBalance;
+          next: (summary: any) => {
+            if (!summary) return;
+            this.courtName = summary.court?.name || summary.courtName || this.courtName;
+            this.establishmentName = summary.complex?.name || summary.complexName || this.establishmentName;
+            this.establishmentAddress = summary.complex?.location || summary.complexAddress || this.establishmentAddress;
+            this.date = summary.reservationDate || this.date;
+            this.startTime = summary.startTime || this.startTime;
+            this.endTime = summary.endTime || this.endTime;
+            this.totalPrice = summary.totalPrice ?? this.totalPrice;
+            this.advance = summary.advanceRequired ?? this.advance;
+            this.balance = summary.pendingBalance ?? this.balance;
           },
         });
       }
