@@ -1,7 +1,7 @@
+import { ConfirmationService } from '../../services/confirmation.service';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from '../../components/navbar/navbar';
 import {
   AdminService,
   KpiSummary,
@@ -21,7 +21,7 @@ type AdminTab = 'analytics' | 'complexes' | 'schedules' | 'staff' | 'audit';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.scss'],
 })
@@ -29,6 +29,7 @@ export class AdminDashboardComponent implements OnInit {
   private adminService = inject(AdminService);
   private complexService = inject(ComplexService);
   private courtService = inject(CourtService);
+  private confirmation = inject(ConfirmationService);
 
   activeTab = signal<AdminTab>('analytics');
   loading = signal<boolean>(false);
@@ -211,7 +212,9 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  toggleComplex(complexId: number): void {
+  async toggleComplex(complexId: number): Promise<void> {
+    if (this.loading()) return;
+    if (!await this.confirmation.confirm({ title: 'Cambiar estado del complejo', message: 'Se cambiará la disponibilidad de ' + (this.complexes().find(c => c.id === complexId)?.name || 'este complejo') + '.', confirmText: 'Cambiar estado', danger: true })) return;
     this.loading.set(true);
     this.adminService.toggleComplex(complexId).subscribe({
       next: () => {
@@ -253,10 +256,12 @@ export class AdminDashboardComponent implements OnInit {
     this.showQrModal.set(true);
   }
 
-  submitQr(): void {
+  async submitQr(): Promise<void> {
+    if (this.loading()) return;
     const comp = this.selectedComplexForQr();
     if (!comp || !this.newQrUrl().trim()) return;
 
+    if (!await this.confirmation.confirm({ title: 'Actualizar QR de pago', message: 'Se reemplazará el QR de pago de ' + comp.name + '. Verifica que corresponde a la cuenta correcta.', confirmText: 'Actualizar QR' })) return;
     this.loading.set(true);
     this.adminService.uploadComplexQr(comp.id, this.newQrUrl().trim()).subscribe({
       next: () => {
@@ -272,7 +277,9 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  toggleCourt(courtId: number): void {
+  async toggleCourt(courtId: number): Promise<void> {
+    if (this.loading()) return;
+    if (!await this.confirmation.confirm({ title: 'Cambiar estado de la cancha', message: 'Se cambiará la disponibilidad de ' + (this.courts().find(c => c.id === courtId)?.name || 'esta cancha') + '.', confirmText: 'Cambiar estado', danger: true })) return;
     this.loading.set(true);
     this.adminService.toggleCourt(courtId).subscribe({
       next: () => {
@@ -293,13 +300,15 @@ export class AdminDashboardComponent implements OnInit {
     this.showEditPriceModal.set(true);
   }
 
-  submitPriceUpdate(): void {
+  async submitPriceUpdate(): Promise<void> {
+    if (this.loading()) return;
     const court = this.selectedCourtForPrice();
     if (!court || this.newCourtPrice() <= 0) {
       this.showError('Ingresa un precio por hora válido.');
       return;
     }
 
+    if (!await this.confirmation.confirm({ title: 'Actualizar precio', message: court.name + ': el nuevo precio será Bs ' + this.newCourtPrice() + ' por hora.', confirmText: 'Actualizar precio' })) return;
     this.loading.set(true);
     this.adminService.updateCourtPrice(court.id, Number(this.newCourtPrice())).subscribe({
       next: () => {
@@ -374,10 +383,12 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  saveWeeklySchedules(): void {
+  async saveWeeklySchedules(): Promise<void> {
+    if (this.loading()) return;
     const courtId = this.selectedCourtForSchedule();
     if (!courtId) return;
 
+    if (!await this.confirmation.confirm({ title: 'Guardar horarios', message: 'Se actualizarán los horarios semanales de la cancha seleccionada.', confirmText: 'Guardar horarios' })) return;
     this.loading.set(true);
     this.adminService.setWeeklySchedules(courtId, this.weeklyDays).subscribe({
       next: () => {
@@ -391,12 +402,14 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  submitMaintenance(): void {
+  async submitMaintenance(): Promise<void> {
+    if (this.loading()) return;
     if (!this.maintenanceForm.courtId || !this.maintenanceForm.startDatetime || !this.maintenanceForm.endDatetime) {
       this.showError('Completa todos los campos para programar mantenimiento.');
       return;
     }
 
+    if (!await this.confirmation.confirm({ title: 'Programar mantenimiento', message: 'La cancha quedará bloqueada desde ' + this.maintenanceForm.startDatetime + ' hasta ' + this.maintenanceForm.endDatetime + '.', confirmText: 'Bloquear cancha', danger: true })) return;
     this.loading.set(true);
     this.adminService
       .scheduleMaintenance(Number(this.maintenanceForm.courtId), {
@@ -416,12 +429,14 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
-  submitImmediateIncident(): void {
+  async submitImmediateIncident(): Promise<void> {
+    if (this.loading()) return;
     if (!this.immediateIncidentForm.courtId || !this.immediateIncidentForm.reason) {
       this.showError('Ingresa el motivo del incidente inmediato.');
       return;
     }
 
+    if (!await this.confirmation.confirm({ title: 'Inhabilitar cancha', message: 'La cancha quedará inhabilitada durante ' + this.immediateIncidentForm.durationHours + ' horas. Motivo: ' + this.immediateIncidentForm.reason, confirmText: 'Registrar incidente', danger: true })) return;
     this.loading.set(true);
     this.adminService
       .registerImmediateIncident(Number(this.immediateIncidentForm.courtId), {
@@ -448,8 +463,10 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  toggleStaffStatus(member: StaffItem): void {
+  async toggleStaffStatus(member: StaffItem): Promise<void> {
+    if (this.loading()) return;
     const newStatus = member.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    if (!await this.confirmation.confirm({ title: 'Cambiar acceso del personal', message: member.name + ' pasará al estado ' + newStatus + '.', confirmText: 'Cambiar estado', danger: newStatus === 'INACTIVO' })) return;
     this.loading.set(true);
     this.adminService.updateStaffStatus(member.id, newStatus).subscribe({
       next: () => {
