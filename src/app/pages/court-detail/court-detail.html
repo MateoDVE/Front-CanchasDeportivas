@@ -605,20 +605,27 @@
 
 
 
+          @if(bookingError) {
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl mb-3">
+              {{ bookingError }}
+            </div>
+          }
+
           <!-- CONTINUAR -->
 
           <button
             (click)="continueBooking()"
-            [disabled]="!selectedStart"
+            [disabled]="!selectedStart || bookingLoading"
             class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
           >
-
-            {{
-              selectedStart
-                ? 'Continuar con la reserva'
-                : 'Selecciona un horario'
-            }}
-
+            <span *ngIf="bookingLoading">Bloqueando turno temporalmente...</span>
+            <span *ngIf="!bookingLoading">
+              {{
+                selectedStart
+                  ? 'Continuar con la reserva'
+                  : 'Selecciona un horario'
+              }}
+            </span>
           </button>
 
         </div>

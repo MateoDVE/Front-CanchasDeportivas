@@ -1,225 +1,147 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-
+import { ReservationService } from '../../services/reservation.service';
+import { AuthService } from '../../services/auth.service';
+import { ClientReservationItem } from '../../models/reservation.model';
 
 @Component({
   selector: 'app-my-reservations',
   standalone: true,
-  imports: [
-    CommonModule
-  ],
+  imports: [CommonModule],
   templateUrl: './my-reservations.html',
-  styleUrls: ['./my-reservations.scss']
+  styleUrls: ['./my-reservations.scss'],
 })
-export class MyReservationsComponent {
-
+export class MyReservationsComponent implements OnInit {
+  private router = inject(Router);
+  private reservationService = inject(ReservationService);
+  authService = inject(AuthService);
 
   activeFilter = 'all';
+  loading = true;
+  selectedReservation: ClientReservationItem | null = null;
+  showCancelModal = false;
 
-  cancelId:string | null = null;
-
-  selectedReservation:any = null;
-
-  showCancelModal=false;
-
-
+  user = computed(() => this.authService.currentUser());
+  userInitials = computed(() => {
+    const u = this.user();
+    if (!u || !u.name) return 'U';
+    const parts = u.name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  });
 
   filters = [
-
-    {
-      key:'all',
-      label:'Todas'
-    },
-
-    {
-      key:'confirmed',
-      label:'Confirmadas'
-    },
-
-    {
-      key:'pending',
-      label:'Pendientes'
-    },
-
-    {
-      key:'finished',
-      label:'Finalizadas'
-    },
-
-    {
-      key:'cancelled',
-      label:'Canceladas'
-    }
-
+    { key: 'all', label: 'Todas' },
+    { key: 'confirmed', label: 'Confirmadas' },
+    { key: 'pending', label: 'En validación' },
+    { key: 'finished', label: 'Finalizadas' },
+    { key: 'cancelled', label: 'Canceladas / Expiradas' },
   ];
 
+  reservations: ClientReservationItem[] = [];
 
-
-  reservations=[
-
-
-    {
-      id:'R-101',
-      court:'Cancha Futsal A',
-      establishment:'SportCenter Norte',
-      date:'2026-08-20',
-      startTime:'10:00',
-      durationHours:1,
-      totalPrice:80,
-      advanceAmount:20,
-      reservationStatus:'pending',
-      paymentStatus:'pending',
-      image:'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=600'
-    },
-
-
-    {
-      id:'R-102',
-      court:'Cancha Pádel Pro',
-      establishment:'Arena Deportiva',
-      date:'2026-08-10',
-      startTime:'18:00',
-      durationHours:2,
-      totalPrice:240,
-      advanceAmount:60,
-      reservationStatus:'confirmed',
-      paymentStatus:'paid',
-      image:'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600'
-    },
-
-
-    {
-      id:'R-103',
-      court:'Cancha Vóley Premium',
-      establishment:'Arena Deportiva',
-      date:'2026-07-30',
-      startTime:'16:00',
-      durationHours:1,
-      totalPrice:60,
-      advanceAmount:15,
-      reservationStatus:'finished',
-      paymentStatus:'paid',
-      image:'https://images.unsplash.com/photo-1518605368461-0b5d2a7f9f4d?w=600'
+  ngOnInit(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/my-reservations' } });
+      return;
     }
+    this.loadReservations();
+  }
 
-  ];
-
-
-
-  constructor(
-    private router:Router
-  ){}
-
-
-
-  get visibleReservations(){
-
-    return this.reservations.filter(r=>{
-
-      if(this.activeFilter==='all'){
-        return true;
-      }
-
-      return r.reservationStatus === this.activeFilter;
-
+  loadReservations(): void {
+    this.loading = true;
+    this.reservationService.getMyReservations().subscribe({
+      next: (grouped) => {
+        this.reservations = [...grouped.upcoming, ...grouped.history];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar reservas:', err);
+        this.loading = false;
+      },
     });
-
   }
 
-
-
-  changeFilter(filter:string){
-
-    this.activeFilter=filter;
-
+  get totalCount(): number {
+    return this.reservations.length;
   }
 
-
-
-  getEndTime(
-    start:string,
-    duration:number
-  ){
-
-    const [h,m]=start.split(':').map(Number);
-
-
-    const total =
-    h*60+m+(duration*60);
-
-
-    return (
-
-      String(Math.floor(total/60))
-      .padStart(2,'0')
-
-      +
-
-      ':'
-
-      +
-
-      String(total%60)
-      .padStart(2,'0')
-
-    );
-
+  get activeCount(): number {
+    return this.reservations.filter((r) =>
+      ['CONFIRMED', 'PENDING_VALIDATION', 'TEMPORAL'].includes(r.status),
+    ).length;
   }
 
-
-
-  openCancel(reservation:any){
-
-    this.selectedReservation=reservation;
-
-    this.showCancelModal=true;
-
+  get historyCount(): number {
+    return this.reservations.filter(
+      (r) => !['CONFIRMED', 'PENDING_VALIDATION', 'TEMPORAL'].includes(r.status),
+    ).length;
   }
 
-
-
-  closeModal(){
-
-    this.selectedReservation=null;
-
-    this.showCancelModal=false;
-
+  get visibleReservations(): ClientReservationItem[] {
+    return this.reservations.filter((r) => {
+      if (this.activeFilter === 'all') return true;
+      if (this.activeFilter === 'confirmed') return r.status === 'CONFIRMED';
+      if (this.activeFilter === 'pending')
+        return r.status === 'PENDING_VALIDATION' || r.status === 'TEMPORAL';
+      if (this.activeFilter === 'finished')
+        return r.status === 'COMPLETED' || r.status === 'FINISHED';
+      if (this.activeFilter === 'cancelled')
+        return r.status === 'CANCELLED' || r.status === 'EXPIRED';
+      return true;
+    });
   }
 
+  changeFilter(filter: string): void {
+    this.activeFilter = filter;
+  }
 
+  formatCode(id: string): string {
+    if (!id) return '';
+    return id.length > 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase();
+  }
 
-  cancelReservation(){
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T12:00:00');
+    if (isNaN(date.getTime())) return dateStr;
+    const formatted = date.toLocaleDateString('es-BO', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
 
-    if(this.selectedReservation){
-
-      this.selectedReservation.reservationStatus='cancelled';
-
+  getStatusBadge(status: string): { label: string; bg: string; text: string; lineColor: string } {
+    switch (status) {
+      case 'CONFIRMED':
+        return { label: 'Confirmada', bg: 'bg-emerald-100', text: 'text-emerald-800', lineColor: '#10b981' };
+      case 'PENDING_VALIDATION':
+        return { label: 'En validación', bg: 'bg-amber-100', text: 'text-amber-800', lineColor: '#f59e0b' };
+      case 'TEMPORAL':
+        return { label: 'Bloqueo temporal', bg: 'bg-blue-100', text: 'text-blue-800', lineColor: '#3b82f6' };
+      case 'CANCELLED':
+        return { label: 'Cancelada', bg: 'bg-rose-100', text: 'text-rose-800', lineColor: '#f43f5e' };
+      case 'EXPIRED':
+        return { label: 'Expirada', bg: 'bg-slate-100', text: 'text-slate-600', lineColor: '#cbd5e1' };
+      case 'COMPLETED':
+      case 'FINISHED':
+        return { label: 'Finalizada', bg: 'bg-purple-100', text: 'text-purple-800', lineColor: '#a855f7' };
+      default:
+        return { label: status, bg: 'bg-slate-100', text: 'text-slate-700', lineColor: '#94a3b8' };
     }
-
-
-    this.closeModal();
-
   }
 
-
-
-  newReservation(){
-
-    this.router.navigate([
-      '/courts'
-    ]);
-
+  newReservation(): void {
+    this.router.navigate(['/courts']);
   }
 
-
-
-  goDetail(id:string){
-
-    this.router.navigate([
-      '/court-detail',
-      id
-    ]);
-
+  goDetail(courtId: number): void {
+    this.router.navigate(['/court-detail', courtId]);
   }
 }

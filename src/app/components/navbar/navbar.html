@@ -1,218 +1,106 @@
-<nav class="navbar">
-
-
-<div class="container">
-
-
-<!-- LOGO -->
-
-<button 
-class="logo"
-(click)="navigate('landing')"
->
-
-
-<div class="logo-box">
-
-
-<svg viewBox="0 0 24 24">
-
-<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1"/>
-
-</svg>
-
-
-</div>
-
-
-<span>
-
-SportReserva
-
-</span>
-
-
-</button>
-
-
-
-<!-- MENU DESKTOP -->
-
-
-<div class="menu">
-
-
-<button
-[class.active]="currentPage==='landing'"
-(click)="navigate('landing')"
->
-
-Inicio
-
-</button>
-
-
-
-<button
-(click)="navigate('courts')"
->
-
-Canchas
-
-</button>
-
-
-
-<button
-(click)="navigate('landing')"
->
-
-Cómo funciona
-
-</button>
-
-
-
-<button
-(click)="navigate('my-reservations')"
->
-
-Mis reservas
-
-</button>
-
-
-</div>
-
-
-
-
-<!-- ACTIONS -->
-
-
-<div class="actions">
-
-
-@if(isLoggedIn){
-
-
-<button 
-class="user"
-(click)="navigate('my-reservations')"
->
-
-
-<span>
-
-CM
-
-</span>
-
-
-Carlos M.
-
-</button>
-
-
-
-}
-
-@else{
-
-
-<button
-class="login"
-(click)="navigate('login')"
->
-
-Iniciar sesión
-
-</button>
-
-
-}
-
-
-
-<button
-class="reserve"
-(click)="navigate('courts')"
->
-
-Reservar cancha
-
-</button>
-
-
-
-</div>
-
-
-
-<button 
-class="mobile"
-(click)="mobileOpen=!mobileOpen"
->
-
-
-☰
-
-
-</button>
-
-
-</div>
-
-
-
-@if(mobileOpen){
-
-
-<div class="mobile-menu">
-
-
-<button
-(click)="navigate('landing')"
->
-
-Inicio
-
-</button>
-
-
-<button
-(click)="navigate('courts')"
->
-
-Canchas
-
-</button>
-
-
-<button
-(click)="navigate('my-reservations')"
->
-
-Mis reservas
-
-</button>
-
-
-
-<button
-class="reserve"
-(click)="navigate('courts')"
->
-
-Reservar cancha
-
-</button>
-
-
-</div>
-
-
-}
-
-
+<nav class="navbar" aria-label="Navegación principal" (keydown.escape)="closeMenu(menuToggle)">
+  <div class="container">
+    <!-- LOGO -->
+    <button type="button" class="logo" (click)="navigate('landing')">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1"/>
+        </svg>
+      </div>
+      <span>SportReserva</span>
+    </button>
+
+    <!-- MENU DESKTOP -->
+    <div class="menu">
+      <button type="button" [class.active]="activePage()==='landing'" (click)="navigate('landing')">
+        Inicio
+      </button>
+      <button type="button" [class.active]="activePage()==='courts'" (click)="navigate('courts')">
+        Canchas
+      </button>
+      <button type="button" (click)="navigate('landing')">
+        Cómo funciona
+      </button>
+      <button type="button" [class.active]="activePage()==='my-reservations'" (click)="navigate('my-reservations')">
+        Mis reservas
+      </button>
+      @if(isSecretary()){
+        <button type="button" [class.active]="activePage()==='secretary'" (click)="navigate('secretary')" class="badge-link">
+          ⚡ Secretaría
+        </button>
+      }
+      @if(isAdmin()){
+        <button type="button" [class.active]="activePage()==='admin'" (click)="navigate('admin')" class="badge-link admin-link">
+          🛡️ Admin
+        </button>
+      }
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions">
+      @if(isLoggedIn()){
+        <button type="button" class="user" (click)="navigate('my-reservations')" [title]="'Rol: ' + (userRole() || 'CLIENTE')">
+          <span class="avatar">{{ userInitials() }}</span>
+          <span class="user-info" [title]="user()?.name || 'Mi cuenta'">
+            <span class="user-name">{{ user()?.name || 'Mi cuenta' }}</span>
+            <small>{{ userRole() || 'CLIENTE' }}</small>
+          </span>
+        </button>
+        <button type="button" class="login" (click)="logout()" title="Cerrar sesión">
+          Salir
+        </button>
+      } @else {
+        <button type="button" class="login" (click)="navigate('login')">
+          Iniciar sesión
+        </button>
+      }
+
+      <button type="button" class="reserve" (click)="navigate('courts')">
+        Reservar cancha
+      </button>
+    </div>
+
+    <button type="button" #menuToggle class="mobile" (click)="mobileOpen=!mobileOpen" [attr.aria-expanded]="mobileOpen" aria-controls="navbar-mobile-menu" [attr.aria-label]="mobileOpen ? 'Cerrar menú' : 'Abrir menú'">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        @if(mobileOpen) { <path d="M6 6l12 12M6 18L18 6" /> }
+        @else { <path d="M4 6h16M4 12h16M4 18h16" /> }
+      </svg>
+    </button>
+  </div>
+
+  @if(mobileOpen){
+    <div class="mobile-menu" id="navbar-mobile-menu">
+      <button type="button" [class.active]="activePage()==='landing'" [attr.aria-current]="activePage()==='landing' ? 'page' : null" (click)="navigate('landing')">
+        Inicio
+      </button>
+      <button type="button" [class.active]="activePage()==='courts'" [attr.aria-current]="activePage()==='courts' ? 'page' : null" (click)="navigate('courts')">
+        Canchas
+      </button>
+      <button type="button" [class.active]="activePage()==='my-reservations'" [attr.aria-current]="activePage()==='my-reservations' ? 'page' : null" (click)="navigate('my-reservations')">
+        Mis reservas
+      </button>
+      @if(isSecretary()){
+        <button type="button" [class.active]="activePage()==='secretary'" [attr.aria-current]="activePage()==='secretary' ? 'page' : null" (click)="navigate('secretary')" class="badge-link">
+          ⚡ Panel Secretaría
+        </button>
+      }
+      @if(isAdmin()){
+        <button type="button" [class.active]="activePage()==='admin'" [attr.aria-current]="activePage()==='admin' ? 'page' : null" (click)="navigate('admin')" class="badge-link admin-link">
+          🛡️ Panel Administrador
+        </button>
+      }
+      @if(isLoggedIn()){
+        <button type="button" (click)="logout()" class="text-rose-500">
+          Cerrar sesión ({{ user()?.name }})
+        </button>
+      } @else {
+        <button type="button" (click)="navigate('login')">
+          Iniciar sesión
+        </button>
+      }
+      <button type="button" class="reserve" (click)="navigate('courts')">
+        Reservar cancha
+      </button>
+    </div>
+  }
 </nav>

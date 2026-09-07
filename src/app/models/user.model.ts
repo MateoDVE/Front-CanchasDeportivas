@@ -1,37 +1,28 @@
 export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  ci: string;
+  role: 'CLIENTE' | 'SECRETARIA' | 'ADMIN' | string;
+  status: string;
+  createdAt: string | Date;
+}
 
+export interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
 
-id:number;
+export interface LoginDto {
+  email: string;
+  password: string;
+}
 
-
-name:string;
-
-
-email:string;
-
-
-password:string;
-
-
-role:string;
-
-
-}export interface User {
-
-
-id:number;
-
-
-name:string;
-
-
-email:string;
-
-
-password:string;
-
-
-role:string;
-
-
+export interface RegisterDto {
+  name: string;
+  email: string;
+  phone: string;
+  ci: string;
+  password: string;
 }

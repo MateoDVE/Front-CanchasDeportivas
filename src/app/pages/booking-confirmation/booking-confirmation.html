@@ -1,278 +1,86 @@
 <div class="max-w-md mx-auto px-4 py-12">
-
-
-
-<div class="text-center mb-8">
-
-
-<div class="w-20 h-20 bg-emerald-100 rounded-full mx-auto flex items-center justify-center text-4xl">
-
-✓
-
-</div>
-
-
-<h1 class="text-2xl font-bold mt-4">
-
-¡Reserva realizada!
-
-</h1>
-
-
-<p class="text-slate-500 text-sm">
-
-Tu anticipo está siendo verificado.
-
-</p>
-
-
-</div>
-
-
-
-
-
-
-<div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-
-
-
-<div class="bg-emerald-600 text-white p-5">
-
-
-<p class="text-xs">
-
-Número de reserva
-
-</p>
-
-
-<h2 class="text-xl font-bold">
-
-{{reservationId}}
-
-</h2>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="p-6 space-y-3 text-sm">
-
-
-<div class="flex justify-between">
-
-<span>
-Cancha
-</span>
-
-<strong>
-{{court.name}}
-</strong>
-
-</div>
-
-
-
-<div class="flex justify-between">
-
-<span>
-Establecimiento
-</span>
-
-<strong>
-{{establishment.name}}
-</strong>
-
-</div>
-
-
-
-
-<div class="flex justify-between">
-
-<span>
-Dirección
-</span>
-
-<strong>
-{{establishment.address}}
-</strong>
-
-</div>
-
-
-
-
-
-<div class="flex justify-between">
-
-<span>
-Fecha
-</span>
-
-<strong>
-{{date}}
-</strong>
-
-</div>
-
-
-
-
-
-<div class="flex justify-between">
-
-<span>
-Horario
-</span>
-
-<strong>
-{{startTime}} -
-{{getEndTime()}}
-
-</strong>
-
-</div>
-
-
-
-
-
-<div class="flex justify-between">
-
-<span>
-Duración
-</span>
-
-<strong>
-{{duration}} hora
-
-</strong>
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<div class="p-6">
-
-
-<div class="bg-slate-50 rounded-xl p-4">
-
-
-<div class="flex justify-between">
-
-<span>
-
-Total
-
-</span>
-
-
-<strong>
-
-Bs {{totalPrice}}
-
-</strong>
-
-</div>
-
-
-
-
-<div class="flex justify-between text-emerald-600">
-
-<span>
-
-Anticipo
-
-</span>
-
-
-<strong>
-
-Bs {{advance}}
-
-</strong>
-
-
-</div>
-
-
-
-
-
-<div class="border-t mt-3 pt-3 flex justify-between">
-
-
-<span>
-
-Saldo
-
-</span>
-
-
-<strong>
-
-Bs {{totalPrice-advance}}
-
-</strong>
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<button
-
-(click)="goReservations()"
-
-class="w-full mt-5 bg-emerald-600 text-white py-3 rounded-xl">
-
-
-Ver mis reservas
-
-</button>
-
-
-
-<button
-
-(click)="goHome()"
-
-class="w-full mt-3 border py-3 rounded-xl">
-
-
-Volver al inicio
-
-</button>
-
-
-
+  <div class="text-center mb-8">
+    <div class="w-20 h-20 bg-emerald-100 rounded-full mx-auto flex items-center justify-center text-4xl mb-4">
+      ✓
+    </div>
+    <h1 class="text-2xl font-bold text-slate-900">
+      ¡Reserva realizada con éxito!
+    </h1>
+    <p class="text-slate-500 text-sm mt-1">
+      Tu comprobante de anticipo está en proceso de validación.
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+    <div class="bg-emerald-600 text-white p-5">
+      <p class="text-xs text-emerald-100 uppercase tracking-wider font-semibold">
+        Código de Reserva
+      </p>
+      <h2 class="text-base sm:text-lg font-mono font-bold mt-1 break-all">
+        {{ reservationId }}
+      </h2>
+    </div>
+
+    <div class="p-6 space-y-3 text-sm border-b border-slate-100">
+      <div class="flex justify-between">
+        <span class="text-slate-500">Cancha:</span>
+        <strong class="text-slate-800">{{ courtName }}</strong>
+      </div>
+
+      <div class="flex justify-between">
+        <span class="text-slate-500">Complejo:</span>
+        <strong class="text-slate-800">{{ establishmentName }}</strong>
+      </div>
+
+      @if(establishmentAddress) {
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-400">Dirección:</span>
+          <span class="text-slate-600 text-right">{{ establishmentAddress }}</span>
+        </div>
+      }
+
+      <div class="flex justify-between">
+        <span class="text-slate-500">Fecha:</span>
+        <strong class="text-slate-800">{{ date }}</strong>
+      </div>
+
+      <div class="flex justify-between">
+        <span class="text-slate-500">Horario:</span>
+        <strong class="text-slate-800">{{ startTime }} - {{ endTime }}</strong>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div class="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-slate-600">Precio total:</span>
+          <strong class="text-slate-900">Bs {{ totalPrice }}</strong>
+        </div>
+
+        <div class="flex justify-between text-emerald-600">
+          <span>Anticipo pagado (25%):</span>
+          <strong>Bs {{ advance }}</strong>
+        </div>
+
+        <div class="border-t border-slate-200 pt-2 flex justify-between">
+          <span class="text-slate-600 font-medium">Saldo pendiente (75%):</span>
+          <strong class="text-slate-900">Bs {{ balance }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button
+    (click)="goReservations()"
+    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
+  >
+    Ver mis reservas
+  </button>
+
+  <button
+    (click)="goHome()"
+    class="w-full mt-3 border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-xl transition-colors"
+  >
+    Volver al inicio
+  </button>
 </div>
