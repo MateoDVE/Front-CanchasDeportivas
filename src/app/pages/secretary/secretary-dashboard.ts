@@ -1,7 +1,7 @@
+import { ConfirmationService } from '../../services/confirmation.service';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from '../../components/navbar/navbar';
 import { SecretaryService, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
 import { CourtService } from '../../services/court.service';
 import { Court } from '../../models/court.model';
@@ -11,13 +11,14 @@ type SecretaryTab = 'board' | 'validation' | 'manual' | 'cash';
 @Component({
   selector: 'app-secretary-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './secretary-dashboard.html',
   styleUrls: ['./secretary-dashboard.scss'],
 })
 export class SecretaryDashboardComponent implements OnInit {
   private secretaryService = inject(SecretaryService);
   private courtService = inject(CourtService);
+  private confirmation = inject(ConfirmationService);
 
   activeTab = signal<SecretaryTab>('board');
   loading = signal<boolean>(false);
@@ -57,7 +58,7 @@ export class SecretaryDashboardComponent implements OnInit {
   } | null>(null);
 
   finalPaymentAmount = signal<number>(0);
-  finalPaymentMethod = signal<'CASH' | 'QR'>('CASH');
+  finalPaymentMethod = signal<'EFECTIVO' | 'QR'>('EFECTIVO');
   actionReason = signal<string>('');
   rescheduleDate = signal<string>('');
   rescheduleStartTime = signal<string>('');
@@ -116,8 +117,18 @@ export class SecretaryDashboardComponent implements OnInit {
   loadBoardData(): void {
     this.loading.set(true);
     this.secretaryService.getOperationalBoard(this.selectedDate()).subscribe({
-      next: (data) => {
-        this.boardData.set(data);
+      next: (data: any) => {
+        if (data) {
+          const mapped: OperationalBoardOutput = {
+            date: data.date,
+            totalReservations: data.totalReservations ?? data.totalReservationsToday ?? 0,
+            confirmedCount: data.confirmedCount ?? data.confirmedTodayCount ?? 0,
+            pendingValidationCount: data.pendingValidationCount ?? 0,
+            completedCount: data.completedCount ?? 0,
+            courts: data.courts || [],
+          };
+          this.boardData.set(mapped);
+        }
         this.loading.set(false);
       },
       error: (err) => {
@@ -142,10 +153,26 @@ export class SecretaryDashboardComponent implements OnInit {
 
     this.searchingCheckin.set(true);
     this.secretaryService.quickSearch(q).subscribe({
-      next: (results) => {
-        this.searchResults.set(results);
+      next: (results: any[]) => {
+        const mapped = (results || []).map((item) => {
+          if (item.reservation) {
+            return {
+              id: item.id || item.reservation.id,
+              clientName: item.clientName || item.client?.fullName || 'Cliente',
+              status: item.status || item.reservation.status,
+              courtName: item.courtName || `Cancha ${item.reservation.courtId}`,
+              startTime: item.startTime || item.reservation.startTime,
+              endTime: item.endTime || item.reservation.endTime,
+              pendingBalance: item.pendingBalance ?? item.reservation.pendingBalance ?? 0,
+              isAuthorized: item.isAuthorized ?? item.reservation.isEntryAuthorized ?? false,
+              totalAmount: item.totalAmount ?? item.reservation.totalPrice ?? 0,
+            };
+          }
+          return item;
+        });
+        this.searchResults.set(mapped);
         this.searchingCheckin.set(false);
-        if (results.length === 0) {
+        if (mapped.length === 0) {
           this.showError('No se encontraron reservas con ese criterio.');
         } else {
           this.clearAlerts();
@@ -159,7 +186,9 @@ export class SecretaryDashboardComponent implements OnInit {
   }
 
   // Autorizar ingreso a cancha
-  authorizeEntry(reservationId: string): void {
+  async authorizeEntry(reservationId: string): Promise<void> {
+    if (this.loading()) return;
+    if (!await this.confirmation.confirm({ title: 'Autorizar ingreso', message: 'Se autorizará el ingreso para la reserva ' + reservationId + '.', confirmText: 'Autorizar ingreso' })) return;
     this.loading.set(true);
     this.secretaryService.authorizeEntry(reservationId).subscribe({
       next: () => {
@@ -184,7 +213,7 @@ export class SecretaryDashboardComponent implements OnInit {
       reservation,
     });
     this.finalPaymentAmount.set(reservation.pendingBalance || reservation.totalAmount * 0.75);
-    this.finalPaymentMethod.set('CASH');
+    this.finalPaymentMethod.set('EFECTIVO');
   }
 
   submitFinalPayment(): void {
@@ -195,7 +224,7 @@ export class SecretaryDashboardComponent implements OnInit {
     this.secretaryService
       .registerFinalPayment(action.reservation.id, {
         amount: Number(this.finalPaymentAmount()),
-        paymentMethod: this.finalPaymentMethod(),
+        paymentMethod: this.finalPaymentMethod() === ('CASH' as any) ? 'EFECTIVO' : this.finalPaymentMethod(),
       })
       .subscribe({
         next: () => {
@@ -341,7 +370,9 @@ export class SecretaryDashboardComponent implements OnInit {
     this.selectedReceiptImage.set(null);
   }
 
-  validatePayment(paymentId: number): void {
+  async validatePayment(paymentId: number): Promise<void> {
+    if (this.loading()) return;
+    if (!await this.confirmation.confirm({ title: 'Validar comprobante', message: 'Confirma que verificaste el pago del comprobante #' + paymentId + '. La reserva quedará confirmada.', confirmText: 'Validar pago' })) return;
     this.loading.set(true);
     this.secretaryService.validatePayment(paymentId).subscribe({
       next: () => {
@@ -425,8 +456,19 @@ export class SecretaryDashboardComponent implements OnInit {
   // === CONTROL Y CIERRE DE CAJA ===
   loadShiftSummary(): void {
     this.secretaryService.getCurrentShiftSummary(this.selectedDate()).subscribe({
-      next: (summary) => {
-        this.shiftSummary.set(summary);
+      next: (summary: any) => {
+        if (summary) {
+          const mapped: ShiftSummaryOutput = {
+            secretaryId: summary.secretaryId,
+            date: summary.date || summary.shiftDate,
+            totalCollected: summary.totalCollected ?? summary.totalSystem ?? 0,
+            totalCash: summary.totalCash ?? summary.totalSystemCash ?? 0,
+            totalQr: summary.totalQr ?? summary.totalSystemQr ?? 0,
+            transactionsCount: summary.transactionsCount ?? summary.paymentsCount ?? (summary.payments?.length || 0),
+            payments: summary.payments || [],
+          };
+          this.shiftSummary.set(mapped);
+        }
       },
       error: () => {
         // En caso de que no haya turno abierto todavía
@@ -434,7 +476,8 @@ export class SecretaryDashboardComponent implements OnInit {
     });
   }
 
-  submitCloseShift(): void {
+  async submitCloseShift(): Promise<void> {
+    if (this.loading()) return;
     const summary = this.shiftSummary();
     if (!summary) {
       this.showError('No hay información de turno disponible para cerrar.');
@@ -446,6 +489,7 @@ export class SecretaryDashboardComponent implements OnInit {
       return;
     }
 
+    if (!await this.confirmation.confirm({ title: 'Cerrar caja', message: 'Se registrará el cierre del ' + this.selectedDate() + ' con Bs ' + this.declaredCash() + ' de efectivo declarado. Revisa el monto antes de continuar.', confirmText: 'Cerrar caja', danger: true })) return;
     this.loading.set(true);
     this.secretaryService
       .closeShift({
