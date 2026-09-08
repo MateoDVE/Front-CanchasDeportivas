@@ -1,4 +1,4 @@
-export type CourtType = 'Futsal' | 'Wally' | 'Racket' | string;
+export type CourtType = 'Futsal' | 'Wally' | 'Racket' | 'Padel' | string;
 
 export interface Court {
   id: number;
@@ -22,7 +22,7 @@ export interface SlotAvailability {
   startTime: string;
   endTime: string;
   isAvailable: boolean;
-  status: 'AVAILABLE' | 'OCCUPIED' | 'TEMPORAL_HOLD';
+  status: 'AVAILABLE' | 'OCCUPIED' | 'TEMPORAL_HOLD' | 'BLOCKED';
 }
 
 export interface CourtAvailability {

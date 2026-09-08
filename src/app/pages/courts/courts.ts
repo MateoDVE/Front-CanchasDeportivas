@@ -26,7 +26,7 @@ export class CourtsComponent implements OnInit {
   maxPrice = 200;
   loading = true;
 
-  types = ['Futsal', 'Wally', 'Racket'];
+  types = ['Futsal', 'Wally', 'Racket', 'Padel'];
 
   courts: Court[] = [];
   establishments: Complex[] = [];
