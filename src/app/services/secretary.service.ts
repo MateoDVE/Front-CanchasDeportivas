@@ -64,6 +64,14 @@ export interface ShiftSummaryOutput {
   }[];
 }
 
+export interface ClientSearchResult {
+  id: string;
+  name: string;
+  ci: string;
+  phone: string;
+  email: string;
+}
+
 export interface ManualReservationPayload {
   clientId?: string;
   courtId: number;
@@ -146,6 +154,12 @@ export class SecretaryService {
   }
 
   // HU-SEC-05 & HU-SEC-06: Crear reserva manual / WhatsApp
+  searchClients(query: string): Observable<ClientSearchResult[]> {
+    return this.http.get<ClientSearchResult[]>(this.baseUrl + '/clients/search', {
+      params: new HttpParams().set('q', query),
+    });
+  }
+
   createManualReservation(payload: ManualReservationPayload): Observable<any> {
     return this.http.post(`${this.baseUrl}/reservations/manual`, payload);
   }
