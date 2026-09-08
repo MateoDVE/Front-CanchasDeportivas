@@ -131,7 +131,7 @@
               @if(revenueReport()?.byCourt?.length === 0){
                 <p class="empty-state">No hay registros de facturación por cancha aún.</p>
               } @else {
-                <table class="data-table">
+                <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
                   <thead>
                     <tr>
                       <th>Cancha</th>
@@ -148,7 +148,7 @@
                       </tr>
                     }
                   </tbody>
-                </table>
+                </table></div>
               }
             </div>
           </div>
@@ -245,7 +245,7 @@
           </button>
         </div>
 
-        <table class="data-table">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>Cancha</th>
@@ -258,7 +258,7 @@
           <tbody>
             @for(court of courts(); track court.id){
               <tr>
-                <td><strong>{{ court.name }}</strong></td>
+                <td>@if (court.images?.length) { <img [src]="court.images[0]" [alt]="court.name" style="width:72px;height:45px;object-fit:cover;border-radius:8px;margin-bottom:6px" /> }<strong>{{ court.name }}</strong></td>
                 <td>
                   <span class="badge-role-tag">{{ court.courtType || court.sportType }}</span>
                 </td>
@@ -272,6 +272,7 @@
                 </td>
                 <td>
                   <div class="actions-cell">
+                    <button type="button" (click)="openCoverModal(court)" class="btn-sm btn-outline">Editar portada</button>
                     <button (click)="openPriceModal(court)" class="btn-sm btn-outline">
                       Ajustar Precio
                     </button>
@@ -288,7 +289,7 @@
               </tr>
             }
           </tbody>
-        </table>
+        </table></div>
       </section>
     }
 
@@ -436,7 +437,7 @@
           </button>
         </div>
 
-        <table class="data-table">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -457,24 +458,24 @@
                 <td>{{ m.phone || 'N/A' }}</td>
                 <td><span class="badge-role-tag">{{ m.role }}</span></td>
                 <td>
-                  <span class="status-badge" [class.active]="m.status === 'ACTIVO'">
-                    {{ m.status }}
+                  <span class="status-badge" [class.active]="m.status === 'ACTIVE'">
+                    {{ m.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
                   </span>
                 </td>
                 <td>
                   <button
-                    (click)="toggleStaffStatus(m)"
+                    type="button" [disabled]="loading()" (click)="toggleStaffStatus(m)"
                     class="btn-sm"
-                    [class.btn-danger]="m.status === 'ACTIVO'"
-                    [class.btn-success]="m.status !== 'ACTIVO'"
+                    [class.btn-danger]="m.status === 'ACTIVE'"
+                    [class.btn-success]="m.status !== 'ACTIVE'"
                   >
-                    {{ m.status === 'ACTIVO' ? 'Suspender' : 'Activar' }}
+                    {{ m.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
                   </button>
                 </td>
               </tr>
             }
           </tbody>
-        </table>
+        </table></div>
       </section>
     }
 
@@ -492,7 +493,7 @@
         @if(cashShiftsAudit().length === 0){
           <p class="empty-state">No hay registros de cierres de caja en el período.</p>
         } @else {
-          <table class="data-table mb-5">
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table mb-5">
             <thead>
               <tr>
                 <th>Turno #</th>
@@ -529,7 +530,7 @@
                 </tr>
               }
             </tbody>
-          </table>
+          </table></div>
         }
 
         <!-- HISTORIAL GLOBAL DE RESERVAS -->
@@ -551,7 +552,7 @@
           </select>
         </div>
 
-        <table class="data-table">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>ID Reserva</th>
@@ -586,7 +587,7 @@
               </tr>
             }
           </tbody>
-        </table>
+        </table></div>
       </section>
     }
   </main>
@@ -667,7 +668,9 @@
                 <option value="Futsal">Futsal</option>
                 <option value="Wally">Wally</option>
                 <option value="Racket">Racket</option>
+                <option value="Padel">Pádel</option>
               </select>
+              <app-court-cover [value]="newCourtCover()" (valueChange)="newCourtCover.set($event)" [disabled]="loading()" />
             </div>
             <div class="form-group">
               <label>Tarifa por Hora (Bs):</label>
@@ -786,6 +789,23 @@
           <button type="submit" [disabled]="loading()" class="btn btn-primary">Crear Cuenta</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+@if (selectedCoverCourt(); as court) {
+  <div class="modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="cover-title">
+      <div class="modal-header"><h3 id="cover-title">Portada de {{ court.name }}</h3></div>
+      <div class="modal-body">
+        <p>Esta imagen se mostrará en el catálogo y en el detalle de la cancha.</p>
+        <app-court-cover [value]="coverDraft()" (valueChange)="coverDraft.set($event)" [disabled]="loading()" />
+        @if (errorMsg()) { <p role="alert" class="text-red-600">{{ errorMsg() }}</p> }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="selectedCoverCourt.set(null)" [disabled]="loading()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveCover()" [disabled]="loading()">{{ loading() ? 'Guardando…' : 'Guardar portada' }}</button>
+      </div>
     </div>
   </div>
 }
