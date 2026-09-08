@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ComplexService } from '../../services/complex.service';
-import { establishments } from '../../data/mock';
+import { CourtService } from '../../services/court.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-landing',
@@ -15,28 +16,13 @@ export class LandingComponent implements OnInit {
   private router = inject(Router);
   private complexService = inject(ComplexService);
 
-  establishments = establishments;
+  private courtService = inject(CourtService);
+  establishments: {id: number; name: string; address: string; image: string | null; courtTypes: string[]; priceFrom: number | null}[] = [];
+  loading = true;
+  loadError = '';
+  courtTypes: {name: string; icon: string; description: string; image: string | null}[] = [];
 
-  courtTypes = [
-    {
-      name: 'Futsal',
-      icon: '⚽',
-      description: 'Canchas reglamentarias con césped sintético y cemento pulido',
-      image: 'https://images.unsplash.com/photo-1763775468707-573c7cd6b0da?w=400&h=280&fit=crop&auto=format',
-    },
-    {
-      name: 'Vóley / Wally',
-      icon: '🏐',
-      description: 'Canchas con piso de madera flotante y paredes alfombradas',
-      image: 'https://images.unsplash.com/photo-1728971121170-2c8bae90d6fb?w=400&h=280&fit=crop&auto=format',
-    },
-    {
-      name: 'Racket',
-      icon: '🎾',
-      description: 'Canchas de racket y pádel profesionales con visor de vidrio',
-      image: 'https://images.unsplash.com/photo-1646649853703-7645147474ba?w=400&h=280&fit=crop&auto=format',
-    },
-  ];
+
 
   steps = [
     {
@@ -62,28 +48,23 @@ export class LandingComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.complexService.getActiveComplexes().subscribe({
-      next: (complexes) => {
-        if (complexes && complexes.length > 0) {
-          this.establishments = complexes.map((c, idx) => ({
-            id: String(c.id),
-            name: c.name,
-            address: c.location,
-            city: 'Bolivia',
-            phone: c.contactInfo,
-            image:
-              establishments[idx % establishments.length]?.image ||
-              'https://images.unsplash.com/photo-1775993167393-f2add1f8eec2?w=600&h=400&fit=crop&auto=format',
-            courts: [],
-            courtTypes: ['Futsal', 'Wally', 'Racket'],
-            priceFrom: 50,
-            rating: 4.8,
-          }));
-        }
+    forkJoin({complexes: this.complexService.getActiveComplexes(), courts: this.courtService.getAllCourts()}).subscribe({
+      next: ({complexes, courts}) => {
+        const active = courts.filter(c => c.isActive && complexes.some(e => e.id === c.complexId));
+        this.establishments = complexes.map(c => {
+          const own = active.filter(court => court.complexId === c.id);
+          return { id: c.id, name: c.name, address: c.location,
+            image: own.flatMap(court => court.images)[0] || null,
+            courtTypes: [...new Set(own.map(court => court.courtType))],
+            priceFrom: own.length ? Math.min(...own.map(court => court.pricePerHour)) : null };
+        });
+        this.courtTypes = [...new Set(active.map(c => c.courtType))].map(name => ({
+          name, icon: '🏟️', description: 'Consulta las canchas disponibles de este deporte.',
+          image: active.find(c => c.courtType === name && c.images.length)?.images[0] || null
+        }));
+        this.loading = false;
       },
-      error: () => {
-        // Mantiene fallback estático
-      },
+      error: () => { this.loading = false; this.loadError = 'No se pudieron cargar los complejos. Intenta nuevamente más tarde.'; }
     });
   }
 
