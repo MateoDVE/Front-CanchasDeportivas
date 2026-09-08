@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 
 @Component({
@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 selector:'app-footer',
 
 standalone:true,
+imports: [RouterLink],
 
 templateUrl:'./footer.html',
 
@@ -16,6 +17,7 @@ styleUrl:'./footer.scss'
 
 
 export class FooterComponent {
+  year = new Date().getFullYear();
 
 
 constructor(

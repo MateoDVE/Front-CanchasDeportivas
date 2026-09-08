@@ -24,10 +24,7 @@
       </button>
 
       <div class="flex items-center gap-3 mb-8">
-        <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
-          ⚽
-        </div>
-        <span class="text-xl font-bold">SportReserva</span>
+        <span class="brand-art"><img src="/logo.png" alt="SportReserva" width="1024" height="690" /></span>
       </div>
 
       <h1 class="text-2xl font-bold text-slate-900">
@@ -78,32 +75,14 @@
         </button>
       </form>
 
-      <!-- Accesos de prueba rápidos -->
       <div class="mt-6 pt-6 border-t border-slate-200 text-center">
-        <p class="text-xs text-slate-400 mb-2">Cuentas de prueba para desarrollo:</p>
-        <div class="flex gap-2 justify-center text-xs">
-          <button
-            type="button"
-            (click)="setDemoAccount('CLIENTE')"
-            class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
-          >
-            👤 Cliente
-          </button>
-          <button
-            type="button"
-            (click)="setDemoAccount('SECRETARIA')"
-            class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
-          >
-            📋 Secretaria
-          </button>
-          <button
-            type="button"
-            (click)="setDemoAccount('ADMIN')"
-            class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
-          >
-            ⚙️ Admin
-          </button>
+        <p class="text-sm text-slate-500 mb-3">Usuarios para la demostración</p>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <button type="button" (click)="setDemoAccount('CLIENTE')" [disabled]="loading" class="min-h-11 px-3 py-2 bg-slate-100 hover:bg-emerald-50 text-slate-700 rounded-lg text-sm">👤 Cliente</button>
+          <button type="button" (click)="setDemoAccount('SECRETARIA')" [disabled]="loading" class="min-h-11 px-3 py-2 bg-slate-100 hover:bg-emerald-50 text-slate-700 rounded-lg text-sm">📋 Secretaría</button>
+          <button type="button" (click)="setDemoAccount('ADMIN')" [disabled]="loading" class="min-h-11 px-3 py-2 bg-slate-100 hover:bg-emerald-50 text-slate-700 rounded-lg text-sm">⚙️ Administrador</button>
         </div>
+        <p class="text-xs text-slate-500 mt-2">Selecciona un rol y pulsa Iniciar sesión.</p>
       </div>
 
       <p class="text-center text-sm text-slate-500 mt-6">
