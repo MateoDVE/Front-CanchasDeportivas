@@ -1,8 +1,8 @@
 import { ConfirmationService } from '../../services/confirmation.service';
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SecretaryService, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
+import { ClientSearchResult, SecretaryService, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
 import { CourtService } from '../../services/court.service';
 import { Court } from '../../models/court.model';
 
@@ -13,9 +13,9 @@ type SecretaryTab = 'board' | 'validation' | 'manual' | 'cash';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './secretary-dashboard.html',
-  styleUrls: ['./secretary-dashboard.scss'],
+  styleUrls: ['./secretary-dashboard.scss', './secretary-cash.scss'],
 })
-export class SecretaryDashboardComponent implements OnInit {
+export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   private secretaryService = inject(SecretaryService);
   private courtService = inject(CourtService);
   private confirmation = inject(ConfirmationService);
@@ -51,6 +51,89 @@ export class SecretaryDashboardComponent implements OnInit {
     clientId: '',
   };
 
+  clientMode = signal<'walk-in' | 'existing'>('walk-in');
+  private clientSearchTimer?: ReturnType<typeof setTimeout>;
+  clientQuery = '';
+  clientResults = signal<ClientSearchResult[]>([]);
+  selectedClient = signal<ClientSearchResult | null>(null);
+  searchingClients = signal(false);
+  clientSearchMessage = signal('');
+  private clientSearchVersion = 0;
+
+  ngOnDestroy(): void {
+    clearTimeout(this.clientSearchTimer);
+    this.clientSearchVersion++;
+  }
+
+  setClientMode(mode: 'walk-in' | 'existing'): void {
+    this.onClientQueryChange('');
+    this.clientMode.set(mode);
+    this.clearAlerts();
+  }
+
+  async chooseWalkInClient(): Promise<void> {
+    this.setClientMode('walk-in');
+    await this.confirmation.confirm({
+      title: 'Cliente presencial seleccionado',
+      message: 'La reserva se registrará a nombre de Cliente presencial. No necesitas buscar un cliente ni ingresar un ID. Puedes continuar con el registro de la reserva.',
+      confirmText: 'Entendido',
+      cancelText: 'Cerrar',
+    });
+  }
+
+  onClientQueryChange(query: string): void {
+    clearTimeout(this.clientSearchTimer);
+    this.clientQuery = query;
+    if (query.trim()) this.clientMode.set('existing');
+    this.clientSearchVersion++;
+    this.searchingClients.set(false);
+    this.clientResults.set([]);
+    this.selectedClient.set(null);
+    this.manualForm.clientId = '';
+    this.clientSearchMessage.set('');
+    if (query.trim().length >= 2) {
+      this.clientSearchTimer = setTimeout(() => this.searchClients(), 300);
+    }
+  }
+
+  searchClients(): void {
+    clearTimeout(this.clientSearchTimer);
+    const query = this.clientQuery.trim();
+    if (query.length < 2) {
+      this.clientSearchMessage.set('Escribe al menos 2 caracteres para buscar.');
+      return;
+    }
+    const version = ++this.clientSearchVersion;
+    this.searchingClients.set(true);
+    this.clientSearchMessage.set('');
+    this.secretaryService.searchClients(query).subscribe({
+      next: clients => {
+        if (version !== this.clientSearchVersion) return;
+        this.clientResults.set(clients);
+        this.searchingClients.set(false);
+        this.clientSearchMessage.set(clients.length ? 'Selecciona el cliente correcto.' : 'No se encontraron clientes. Puedes registrar como cliente presencial.');
+      },
+      error: (error) => {
+        if (version !== this.clientSearchVersion) return;
+        this.searchingClients.set(false);
+        this.clientSearchMessage.set(error.status === 401 ? 'Tu sesión expiró. Vuelve a iniciar sesión.' :
+          error.status === 404 ? 'El backend no tiene disponible el buscador. Reinicia el servidor actualizado.' :
+          error.status === 0 ? 'No se pudo conectar con el servidor.' : 'No se pudo buscar. Intenta nuevamente.');
+      },
+    });
+  }
+
+  selectClient(client: ClientSearchResult): void {
+    clearTimeout(this.clientSearchTimer);
+    this.clientMode.set('existing');
+    this.clientSearchVersion++;
+    this.searchingClients.set(false);
+    this.selectedClient.set(client);
+    this.manualForm.clientId = client.id;
+    this.clientResults.set([]);
+    this.clientSearchMessage.set('');
+  }
+
   // Modales de acción rápida para reservas (Cobro saldo restante / Cancelación / Reprogramación)
   activeReservationAction = signal<{
     type: 'finalPayment' | 'cancel' | 'reschedule' | 'noShow';
@@ -66,7 +149,15 @@ export class SecretaryDashboardComponent implements OnInit {
 
   // Tab 4: Control de Caja
   shiftSummary = signal<ShiftSummaryOutput | null>(null);
-  declaredCash = signal<number>(0);
+  declaredCash = signal<number | null>(null);
+  shiftLoading = signal(false);
+  private shiftRequestVersion = 0;
+  cashDifference = computed(() => {
+    const amount = this.declaredCash();
+    const summary = this.shiftSummary();
+    if (amount === null || !Number.isFinite(amount) || amount < 0 || !summary) return null;
+    return Math.round((amount - Number(summary.totalCash)) * 100) / 100;
+  });
   shiftNotes = signal<string>('');
   shiftCloseResult = signal<any | null>(null);
 
@@ -139,6 +230,9 @@ export class SecretaryDashboardComponent implements OnInit {
   }
 
   onDateChange(): void {
+    this.declaredCash.set(null);
+    this.shiftNotes.set('');
+    this.shiftCloseResult.set(null);
     this.loadBoardData();
     this.loadShiftSummary();
   }
@@ -424,12 +518,24 @@ export class SecretaryDashboardComponent implements OnInit {
   }
 
   // === RESERVA MANUAL / WHATSAPP ===
-  submitManualReservation(): void {
+  async submitManualReservation(): Promise<void> {
+    if (this.loading()) return;
+    if (this.clientMode() === 'existing' && !this.selectedClient()) {
+      this.showError('Selecciona un cliente de la búsqueda o pulsa Usar cliente presencial.');
+      return;
+    }
     if (!this.manualForm.courtId || !this.manualForm.reservationDate || !this.manualForm.startTime || !this.manualForm.endTime) {
       this.showError('Por favor completa todos los campos requeridos para la reserva manual.');
       return;
     }
 
+    const clientName = this.clientMode() === 'walk-in' ? 'Cliente presencial' : this.selectedClient()!.name;
+    if (!await this.confirmation.confirm({
+      title: 'Registrar reserva directa',
+      message: 'Cliente: ' + clientName + '\nFecha: ' + this.manualForm.reservationDate +
+        '\nHorario: ' + this.manualForm.startTime + ' – ' + this.manualForm.endTime,
+      confirmText: 'Registrar reserva',
+    })) return;
     this.loading.set(true);
     this.secretaryService
       .createManualReservation({
@@ -438,12 +544,13 @@ export class SecretaryDashboardComponent implements OnInit {
         startTime: this.manualForm.startTime,
         endTime: this.manualForm.endTime,
         origin: this.manualForm.origin,
-        clientId: this.manualForm.clientId ? this.manualForm.clientId : undefined,
+        ...(this.clientMode() === 'existing' ? { clientId: this.selectedClient()!.id } : {}),
       })
       .subscribe({
         next: (res) => {
           this.loading.set(false);
           this.showSuccess(`✅ Reserva manual creada exitosamente (ID: ${res.id || 'Generada'}).`);
+          this.setClientMode('walk-in');
           this.setTab('board');
         },
         error: (err) => {
@@ -455,8 +562,13 @@ export class SecretaryDashboardComponent implements OnInit {
 
   // === CONTROL Y CIERRE DE CAJA ===
   loadShiftSummary(): void {
+    const version = ++this.shiftRequestVersion;
+    this.shiftLoading.set(true);
+    this.shiftSummary.set(null);
     this.secretaryService.getCurrentShiftSummary(this.selectedDate()).subscribe({
       next: (summary: any) => {
+        if (version !== this.shiftRequestVersion) return;
+        this.shiftLoading.set(false);
         if (summary) {
           const mapped: ShiftSummaryOutput = {
             secretaryId: summary.secretaryId,
@@ -471,25 +583,27 @@ export class SecretaryDashboardComponent implements OnInit {
         }
       },
       error: () => {
-        // En caso de que no haya turno abierto todavía
+        if (version !== this.shiftRequestVersion) return;
+        this.shiftLoading.set(false);
+        this.shiftSummary.set(null);
       },
     });
   }
 
   async submitCloseShift(): Promise<void> {
-    if (this.loading()) return;
+    if (this.loading() || this.shiftLoading() || this.shiftCloseResult()) return;
     const summary = this.shiftSummary();
     if (!summary) {
       this.showError('No hay información de turno disponible para cerrar.');
       return;
     }
 
-    if (this.declaredCash() < 0) {
-      this.showError('El efectivo declarado no puede ser negativo.');
+    if (this.cashDifference() === null) {
+      this.showError('Ingresa un monto de efectivo válido, igual o mayor que cero.');
       return;
     }
 
-    if (!await this.confirmation.confirm({ title: 'Cerrar caja', message: 'Se registrará el cierre del ' + this.selectedDate() + ' con Bs ' + this.declaredCash() + ' de efectivo declarado. Revisa el monto antes de continuar.', confirmText: 'Cerrar caja', danger: true })) return;
+    if (!await this.confirmation.confirm({ title: 'Cerrar caja', message: 'Se registrará el cierre del ' + this.selectedDate() + ' con Bs ' + this.declaredCash() + ' de efectivo declarado. Revisa el monto antes de continuar.', confirmText: 'Cerrar caja', danger: this.cashDifference() !== 0 })) return;
     this.loading.set(true);
     this.secretaryService
       .closeShift({
