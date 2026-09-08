@@ -1,3 +1,4 @@
+<p *ngIf="loading" class="p-6 text-center">Cargando cancha...</p><div *ngIf="!loading && (!court || !establishment)" class="p-6 text-center" role="alert">{{ bookingError }} <button (click)="goBack()">Volver a canchas</button></div>
 <div
   *ngIf="court && establishment"
   class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
@@ -25,10 +26,10 @@
       <!-- GALERÍA -->
       <div class="rounded-2xl overflow-hidden bg-slate-100">
 
-        <div class="aspect-[16/9] relative">
+        <div class="aspect-[16/9] relative"><div *ngIf="!court.images.length" class="absolute inset-0 flex items-center justify-center text-slate-500">Sin portada</div>
 
           <img
-            [src]="court.images[imgIndex]"
+            *ngIf="court.images.length" [src]="court.images[imgIndex]"
             [alt]="court.name"
             class="w-full h-full object-cover"
           >
@@ -94,8 +95,8 @@
               ◉
               {{ establishment.name }}
               ·
-              {{ establishment.address }},
-              {{ establishment.city }}
+              {{ establishment.address }}
+              {{ establishment.city || '' }}
             </div>
 
           </div>
@@ -139,7 +140,7 @@
             </div>
 
             <div class="text-slate-800 font-semibold text-sm">
-              {{ court.surface }}
+              {{ court.surface || 'No especificada' }}
             </div>
 
           </div>
@@ -152,7 +153,7 @@
             </div>
 
             <div class="text-slate-800 font-semibold text-sm">
-              Hasta {{ court.maxPlayers }}
+              {{ court.maxPlayers ? 'Hasta ' + court.maxPlayers : 'No especificado' }}
             </div>
 
           </div>
@@ -165,7 +166,7 @@
             </div>
 
             <div class="text-slate-800 font-semibold text-sm">
-              {{ establishment.phone }}
+              {{ establishment.phone || 'No registrado' }}
             </div>
 
           </div>
@@ -226,6 +227,7 @@
 
 
         <!-- NAVEGACIÓN MES -->
+        <div class="w-full max-w-sm mx-auto mb-5">
 
         <div
           class="flex items-center justify-between mb-3"
@@ -233,6 +235,7 @@
 
           <button
             (click)="prevMonth()"
+            aria-label="Mes anterior"
             class="p-2 rounded-lg hover:bg-slate-100"
           >
             ‹
@@ -249,6 +252,7 @@
 
           <button
             (click)="nextMonth()"
+            aria-label="Mes siguiente"
             class="p-2 rounded-lg hover:bg-slate-100"
           >
             ›
@@ -276,7 +280,7 @@
         <!-- DÍAS -->
 
         <div
-          class="grid grid-cols-7 gap-1 mb-8"
+          class="grid grid-cols-7 gap-1"
         >
 
           <ng-container
@@ -285,7 +289,7 @@
 
             <div
               *ngIf="day === null"
-              class="aspect-square"
+              class="h-10"
             ></div>
 
 
@@ -293,7 +297,7 @@
               *ngIf="day !== null"
               (click)="selectDay(day)"
               [disabled]="isPast(day)"
-              class="aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center"
+              class="h-10 w-full max-w-10 mx-auto rounded-lg text-sm font-medium transition-all flex items-center justify-center"
               [ngClass]="
                 isPast(day)
                   ? 'text-slate-300 cursor-not-allowed'
@@ -312,6 +316,7 @@
 
 
         <!-- DURACIÓN -->
+        </div>
 
         <div class="mb-5">
 
@@ -325,7 +330,7 @@
           <div class="flex gap-2 flex-wrap">
 
             <button
-              *ngFor="let d of [1, 1.5, 2, 2.5, 3]"
+              *ngFor="let d of [1, 2, 3]"
               (click)="setDuration(d)"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border"
               [ngClass]="
@@ -355,6 +360,12 @@
             Horarios disponibles —
             {{ formattedLongDate }}
           </div>
+
+          @if (serverAvailability && !serverAvailability.isOpen) {
+            <p role="status" class="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+              No hay un horario de atención configurado para esta fecha. Consulta con el complejo antes de reservar.
+            </p>
+          }
 
 
           <div

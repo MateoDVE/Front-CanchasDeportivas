@@ -30,22 +30,14 @@ export class BookingFlowComponent implements OnInit {
     notes: '',
   };
 
-  court: any = {
-    id: 1,
-    name: 'Cancha Deportiva',
-    courtType: 'Futsal',
-    pricePerHour: 80,
-    images: ['https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=800'],
-  };
+  court: any = null;
 
-  establishment: any = {
-    name: 'Complejo Deportivo',
-    city: 'Bolivia',
-  };
+  establishment: any = null;
+  loadError = "";
 
   date = '';
-  startTime = '10:00';
-  endTime = '11:00';
+  startTime = '';
+  endTime = '';
   duration = 1;
   totalPrice = 80;
   advance = 20;
@@ -67,17 +59,19 @@ export class BookingFlowComponent implements OnInit {
       this.totalPrice = Number(params['totalPrice']) || 80;
       this.advance = Number(params['advance']) || Number((this.totalPrice * 0.25).toFixed(2));
 
-      const courtId = Number(params['courtId']) || 1;
+      const courtId = Number(params['courtId']);
+      if (!Number.isInteger(courtId) || courtId < 1) { this.loadError = 'Selecciona una cancha para continuar.'; return; }
       this.courtService.getCourtById(courtId).subscribe({
         next: (court) => {
           this.court = court;
-          this.complexService.getActiveComplexes().subscribe((complexes) => {
+          this.complexService.getActiveComplexes().subscribe({next: (complexes) => {
             const found = complexes.find((c) => c.id === court.complexId);
             if (found) {
               this.establishment = found;
-            }
-          });
+            } else { this.loadError = "El complejo no está disponible."; }
+          }, error: () => { this.loadError = "No se pudo cargar el complejo."; }});
         },
+        error: () => { this.loadError = "No se pudo cargar la cancha."; }
       });
     });
   }
@@ -117,6 +111,6 @@ export class BookingFlowComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/court-detail', this.court.id]);
+    this.router.navigate(this.court ? ['/court-detail', this.court.id] : ['/courts']);
   }
 }

@@ -1,4 +1,5 @@
-<div class="max-w-2xl mx-auto px-4 py-8">
+<div *ngIf="!court || !establishment" class="p-6 text-center">{{ loadError || "Cargando reserva..." }}<button *ngIf="loadError" (click)="goBack()">Volver a canchas</button></div>
+<div *ngIf="court && establishment" class="max-w-2xl mx-auto px-4 py-8">
 
 
 <button
@@ -66,7 +67,7 @@ class="flex-1 text-center"
 
 <img
 
-[src]="court.images[0]"
+*ngIf="court.images.length" [src]="court.images[0]"
 
 class="w-16 h-16 rounded-xl object-cover">
 

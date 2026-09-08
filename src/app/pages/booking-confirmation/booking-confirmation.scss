@@ -20,4 +20,7 @@ button:hover{
 
 transform:translateY(-1px);
 
-}
+}:host { display: block; min-width: 0; }
+.flex.justify-between { gap: 8px 16px; flex-wrap: wrap; }
+.flex.justify-between > :last-child { overflow-wrap: anywhere; }
+@media (max-width: 480px) { .flex.justify-between > strong { text-align: right; } }

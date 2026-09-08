@@ -37,4 +37,6 @@ border-color:#10b981;
 
 box-shadow:0 0 0 3px rgba(16,185,129,.15);
 
-}
+}:host { display: block; min-width: 0; }
+.flex.justify-between { flex-wrap: wrap; gap: 8px 16px; }
+button { min-height: 44px; }

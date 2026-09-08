@@ -37,7 +37,7 @@ export interface StaffItem {
   phone: string;
   ci: string;
   role: string;
-  status: 'ACTIVO' | 'INACTIVO';
+  status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
 }
 
@@ -173,6 +173,7 @@ export class AdminService {
     name: string;
     courtType: string;
     pricePerHour: number;
+    images?: string[];
     sportType?: string;
     surfaceType?: string;
     hasLighting?: boolean;
@@ -211,7 +212,12 @@ export class AdminService {
     courtId: number,
     schedules: { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }[],
   ): Observable<CourtScheduleItem[]> {
-    return this.http.put<CourtScheduleItem[]>(`${this.baseUrl}/courts/${courtId}/schedules/weekly`, { schedules });
+    const payload = schedules.filter(day => !day.isClosed).map(day => ({
+      dayOfWeek: day.dayOfWeek === 0 ? 7 : day.dayOfWeek,
+      openTime: day.openTime.slice(0, 5),
+      closeTime: day.closeTime.slice(0, 5),
+    }));
+    return this.http.put<CourtScheduleItem[]>(`${this.baseUrl}/courts/${courtId}/schedules/weekly`, { schedules: payload });
   }
 
   setSpecialSchedule(
@@ -234,7 +240,7 @@ export class AdminService {
     return this.http.post<StaffItem>(`${this.baseUrl}/staff`, payload);
   }
 
-  updateStaffStatus(id: string, status: 'ACTIVO' | 'INACTIVO'): Observable<StaffItem> {
+  updateStaffStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Observable<StaffItem> {
     return this.http.patch<StaffItem>(`${this.baseUrl}/staff/${id}/status`, { status });
   }
 

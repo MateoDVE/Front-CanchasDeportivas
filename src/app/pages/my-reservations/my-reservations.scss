@@ -346,3 +346,17 @@ gap:10px;
 margin-top:20px;
 
 }
+.header, .actions, .top, .modal-actions { flex-wrap: wrap; gap: 12px; }
+.user-info, .content { min-width: 0; }
+.avatar, .line, .top img { flex-shrink: 0; }
+.filters button { flex-shrink: 0; white-space: nowrap; }
+.modal { padding: 16px; z-index: 1000; }
+.modal-box { width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; }
+@media (max-width: 640px) {
+  .container { padding: 24px 16px; }
+  .header h1 { font-size: 26px; }
+  .user-card { flex-wrap: wrap; gap: 12px; padding: 16px; }
+  .stats { width: 100%; justify-content: space-around; gap: 12px; padding-top: 12px; }
+  .content, .modal-box { padding: 16px; }
+  .actions button, .modal-actions button { min-height: 44px; }
+}

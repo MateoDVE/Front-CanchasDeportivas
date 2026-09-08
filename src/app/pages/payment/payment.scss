@@ -38,4 +38,6 @@ border-color:#10b981;
 
 box-shadow:0 0 0 3px rgba(16,185,129,.15);
 
-}
+}:host { display: block; min-width: 0; }
+.flex.justify-between { gap: 8px 16px; flex-wrap: wrap; }
+@media (max-width: 480px) { .grid-cols-3 { grid-template-columns: minmax(0, 1fr); } .grid-cols-3 button { display: flex; align-items: center; gap: 12px; text-align: left; } }

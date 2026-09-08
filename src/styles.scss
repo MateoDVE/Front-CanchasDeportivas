@@ -47,3 +47,36 @@ h6 {
 .font-display {
   font-family: 'Outfit', system-ui, sans-serif;
 }
+
+// Allow content to shrink inside grids and flex layouts without clipping the page.
+:where(main, section, article, aside, form, .grid > *, .flex > *) { min-width: 0; }
+:where(h1, h2, h3, h4, p, label, strong, td) { overflow-wrap: anywhere; }
+input, select, textarea { min-width: 0; max-width: 100%; }
+img, video, canvas { max-width: 100%; }
+.table-scroll { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; }
+.table-scroll:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: 16px; }
+}
+
+// The supplied logo includes white margins; frame the artwork without modifying the source image.
+.brand-art {
+  position: relative;
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  aspect-ratio: 4.2;
+  overflow: hidden;
+  background: white;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.brand-art img {
+  position: absolute;
+  width: 128%;
+  max-width: none;
+  height: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}

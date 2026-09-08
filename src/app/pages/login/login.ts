@@ -63,29 +63,23 @@ export class LoginComponent {
     });
   }
 
-  setDemoAccount(role: 'CLIENTE' | 'SECRETARIA' | 'ADMIN'): void {
-    if (role === 'CLIENTE') {
-      this.form.email = 'cliente@canchas.com';
-      this.form.password = 'Cliente123!';
-    } else if (role === 'SECRETARIA') {
-      this.form.email = 'secretaria@canchas.com';
-      this.form.password = 'Secre123!';
-    } else {
-      this.form.email = 'admin@canchas.com';
-      this.form.password = 'Admin123!';
-    }
-  }
-
   goHome(): void {
     this.router.navigate(['/']);
+  }
+
+  setDemoAccount(role: 'CLIENTE' | 'SECRETARIA' | 'ADMIN'): void {
+    const accounts = {
+      CLIENTE: { email: 'cliente@canchas.com', password: 'Cliente123!' },
+      SECRETARIA: { email: 'secretaria@canchas.com', password: 'Secre123!' },
+      ADMIN: { email: 'admin@canchas.com', password: 'Admin123!' },
+    };
+    this.form = { ...accounts[role] };
+    this.errorMessage = '';
   }
 
   goRegister(): void {
     this.router.navigate(['/register']);
   }
 
-  goAdmin(): void {
-    this.setDemoAccount('ADMIN');
-    this.handleSubmit();
-  }
+
 }

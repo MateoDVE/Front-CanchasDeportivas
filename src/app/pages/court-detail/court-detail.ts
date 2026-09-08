@@ -47,16 +47,12 @@ export class CourtDetailComponent implements OnInit {
 
   days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-  // Franjas horarias por defecto de 08:00 a 23:00
-  timeSlots: string[] = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
-    '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
-    '20:00', '21:00', '22:00',
-  ];
+  timeSlots: string[] = [];
 
   ngOnInit(): void {
     const rawId = this.route.snapshot.paramMap.get('id');
-    const courtId = rawId ? Number(rawId) : 1;
+    const courtId = Number(rawId);
+    if (!Number.isInteger(courtId) || courtId < 1) { this.loading = false; this.bookingError = "La cancha solicitada no existe."; return; }
 
     this.loadCourt(courtId);
   }
@@ -71,36 +67,35 @@ export class CourtDetailComponent implements OnInit {
         this.loadAvailability(court.id, this.selectedDate);
       },
       error: () => {
-        // Fallback a primera cancha si el ID no se encuentra
-        this.courtService.getAllCourts().subscribe((courts) => {
-          if (courts.length > 0) {
-            this.court = courts[0];
-            this.loadEstablishment(this.court.complexId);
-            this.loadAvailability(this.court.id, this.selectedDate);
-          }
-        });
+        this.loading = false;
+        this.bookingError = "No se pudo cargar la cancha solicitada.";
       },
     });
   }
 
   loadEstablishment(complexId: number): void {
-    this.complexService.getActiveComplexes().subscribe((complexes) => {
-      const found = complexes.find((c) => c.id === complexId) || complexes[0] || null;
+    this.complexService.getActiveComplexes().subscribe({ next: (complexes) => {
+      const found = complexes.find((c) => c.id === complexId) || null;
       if (found) {
         this.establishment = {
           ...found,
           address: found.location,
-          city: 'Bolivia',
+          city: found.city,
           phone: found.contactInfo,
         };
       }
       this.loading = false;
-    });
+      if (!found) this.bookingError = "El complejo no está disponible.";
+    }, error: () => { this.loading = false; this.bookingError = "No se pudo cargar el complejo."; } });
   }
 
   loadAvailability(courtId: number, date: string): void {
+    this.serverAvailability = null;
+    this.timeSlots = [];
+    this.selectedStart = null;
     this.courtService.getCourtAvailability(courtId, date).subscribe({
       next: (avail) => {
+        if (date !== this.selectedDate) return;
         this.serverAvailability = avail;
         if (avail && Array.isArray(avail.slots) && avail.slots.length > 0) {
           this.timeSlots = avail.slots
@@ -229,7 +224,7 @@ export class CourtDetailComponent implements OnInit {
 
     const startMinutes = this.timeToMinutes(start);
     const endMinutes = startMinutes + this.duration * 60;
-    const closingMinutes = 23 * 60;
+    const closingMinutes = this.timeToMinutes(this.serverAvailability?.closeTime || '00:00');
 
     if (endMinutes > closingMinutes) {
       return false;
@@ -244,6 +239,7 @@ export class CourtDetailComponent implements OnInit {
   }
 
   setDuration(value: number): void {
+    if (!Number.isInteger(value) || value < 1 || value > 3) return;
     this.duration = value;
     this.selectedStart = null;
   }
@@ -275,6 +271,7 @@ export class CourtDetailComponent implements OnInit {
   }
 
   getSlotStatusText(slot: string): string {
+    if (this.serverAvailability?.slots.find(s => s.startTime === slot)?.status === 'BLOCKED') return 'Mantenimiento';
     const status = this.availability[slot];
     if (status === 'occupied') return 'Ocupado';
     if (status === 'blocked') return 'En reserva';

@@ -10,7 +10,7 @@
 
   <div class="flex flex-col lg:flex-row gap-6">
     <!-- FILTROS -->
-    <aside class="lg:w-64">
+    <aside class="lg:w-64 lg:shrink-0">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <h2 class="font-bold mb-4 text-slate-800">Filtros</h2>
 
@@ -94,11 +94,12 @@
             class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow"
           >
             <img
-              [src]="court.images && court.images.length ? court.images[0] : 'https://images.unsplash.com/photo-1763775468707-573c7cd6b0da?w=800&h=500&fit=crop&auto=format'"
+              *ngIf="court.images.length" [src]="court.images[0]"
               [alt]="court.name"
               class="w-full h-44 object-cover"
             />
 
+            <div *ngIf="!court.images.length" class="h-44 bg-slate-100 flex items-center justify-center text-slate-500">Sin portada</div>
             <div class="p-4 flex-1 flex flex-col justify-between">
               <div>
                 <span class="bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-1 rounded-full text-xs">

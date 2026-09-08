@@ -12,7 +12,7 @@ import { ConfirmationService } from '../../services/confirmation.service';
         <h2 id="confirmation-title">{{ request.title }}</h2>
         <p id="confirmation-description">{{ request.message }}</p>
         <div class="actions">
-          <button type="button" autofocus (click)="finish(false)">Cancelar</button>
+          <button type="button" autofocus (click)="finish(false)">{{ request.cancelText || 'Cancelar' }}</button>
           <button type="button" class="confirm" [class.danger]="request.danger" (click)="finish(true)">
             {{ request.confirmText || 'Confirmar' }}
           </button>

@@ -1,3 +1,4 @@
+import { CourtCoverComponent } from '../../components/court-cover/court-cover';
 import { ConfirmationService } from '../../services/confirmation.service';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -21,7 +22,7 @@ type AdminTab = 'analytics' | 'complexes' | 'schedules' | 'staff' | 'audit';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CourtCoverComponent],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.scss'],
 })
@@ -30,6 +31,34 @@ export class AdminDashboardComponent implements OnInit {
   private complexService = inject(ComplexService);
   private courtService = inject(CourtService);
   private confirmation = inject(ConfirmationService);
+
+  newCourtCover = signal('');
+  selectedCoverCourt = signal<Court | null>(null);
+  coverDraft = signal('');
+
+  openCoverModal(court: Court): void {
+    this.clearAlerts();
+    this.selectedCoverCourt.set(court);
+    this.coverDraft.set(court.images?.[0] || '');
+  }
+
+  saveCover(): void {
+    const court = this.selectedCoverCourt();
+    if (!court || this.loading()) return;
+    this.loading.set(true);
+    this.adminService.updateCourt(court.id, { images: this.coverDraft() ? [this.coverDraft()] : [] }).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.selectedCoverCourt.set(null);
+        this.showSuccess('Portada actualizada.');
+        this.loadComplexesAndCourts();
+      },
+      error: err => {
+        this.loading.set(false);
+        this.showError(err.error?.message || 'No se pudo guardar la portada.');
+      },
+    });
+  }
 
   activeTab = signal<AdminTab>('analytics');
   loading = signal<boolean>(false);
@@ -86,7 +115,7 @@ export class AdminDashboardComponent implements OnInit {
     { dayOfWeek: 4, name: 'Jueves', openTime: '08:00', closeTime: '23:00', isClosed: false },
     { dayOfWeek: 5, name: 'Viernes', openTime: '08:00', closeTime: '23:00', isClosed: false },
     { dayOfWeek: 6, name: 'Sábado', openTime: '08:00', closeTime: '23:00', isClosed: false },
-    { dayOfWeek: 0, name: 'Domingo', openTime: '08:00', closeTime: '23:00', isClosed: false },
+    { dayOfWeek: 7, name: 'Domingo', openTime: '08:00', closeTime: '23:00', isClosed: false },
   ];
 
   maintenanceForm = {
@@ -336,6 +365,7 @@ export class AdminDashboardComponent implements OnInit {
         complexId: Number(this.newCourtForm.complexId),
         name: this.newCourtForm.name.trim(),
         courtType: this.newCourtForm.courtType,
+        images: this.newCourtCover() ? [this.newCourtCover()] : [],
         pricePerHour: Number(this.newCourtForm.pricePerHour),
       })
       .subscribe({
@@ -344,6 +374,7 @@ export class AdminDashboardComponent implements OnInit {
           this.showSuccess('✅ Nueva cancha registrada con éxito.');
           this.showNewCourtModal.set(false);
           this.newCourtForm.name = '';
+          this.newCourtCover.set('');
           this.newCourtForm.courtType = 'Futsal';
           this.newCourtForm.pricePerHour = 100;
           this.loadComplexesAndCourts();
@@ -366,18 +397,17 @@ export class AdminDashboardComponent implements OnInit {
 
     this.adminService.getCourtSchedules(courtId).subscribe({
       next: (schedules) => {
+        if (courtId !== this.selectedCourtForSchedule()) return;
         this.courtSchedules.set(schedules);
-        // Mapear horarios existentes a los días semanales
-        if (schedules.length > 0) {
-          schedules.forEach((sch) => {
-            const day = this.weeklyDays.find((d) => d.dayOfWeek === sch.dayOfWeek);
-            if (day) {
-              day.openTime = sch.openTime;
-              day.closeTime = sch.closeTime;
-              day.isClosed = sch.isClosed;
-            }
-          });
-        }
+        this.weeklyDays = this.weeklyDays.map(day => {
+          const schedule = schedules.find(sch => sch.dayOfWeek === day.dayOfWeek);
+          return {
+            ...day,
+            openTime: schedule?.openTime?.slice(0, 5) || '08:00',
+            closeTime: schedule?.closeTime?.slice(0, 5) || '23:00',
+            isClosed: !schedule,
+          };
+        });
       },
       error: () => {},
     });
@@ -388,12 +418,20 @@ export class AdminDashboardComponent implements OnInit {
     const courtId = this.selectedCourtForSchedule();
     if (!courtId) return;
 
+    const invalidDay = this.weeklyDays.find(day => !day.isClosed &&
+      (!/^([01]\d|2[0-3]):[0-5]\d$/.test(day.openTime) ||
+       !/^([01]\d|2[0-3]):[0-5]\d$/.test(day.closeTime) || day.openTime >= day.closeTime));
+    if (invalidDay) {
+      this.showError('Revisa el horario de ' + invalidDay.name + ': la apertura debe ser anterior al cierre y ambas horas son obligatorias.');
+      return;
+    }
     if (!await this.confirmation.confirm({ title: 'Guardar horarios', message: 'Se actualizarán los horarios semanales de la cancha seleccionada.', confirmText: 'Guardar horarios' })) return;
     this.loading.set(true);
     this.adminService.setWeeklySchedules(courtId, this.weeklyDays).subscribe({
       next: () => {
         this.loading.set(false);
         this.showSuccess('✅ Horarios semanales guardados correctamente.');
+        this.loadCourtSchedules();
       },
       error: (err) => {
         this.loading.set(false);
@@ -413,14 +451,14 @@ export class AdminDashboardComponent implements OnInit {
     this.loading.set(true);
     this.adminService
       .scheduleMaintenance(Number(this.maintenanceForm.courtId), {
-        startDatetime: this.maintenanceForm.startDatetime,
-        endDatetime: this.maintenanceForm.endDatetime,
+        startDatetime: new Date(this.maintenanceForm.startDatetime).toISOString(),
+        endDatetime: new Date(this.maintenanceForm.endDatetime).toISOString(),
         reason: this.maintenanceForm.reason || 'Mantenimiento preventivo',
       })
       .subscribe({
         next: (res) => {
           this.loading.set(false);
-          this.showSuccess('✅ Mantenimiento preventivo programado y cancha bloqueada.');
+          this.showSuccess('Mantenimiento guardado. Solo se bloqueará el intervalo indicado.');
         },
         error: (err) => {
           this.loading.set(false);
@@ -436,7 +474,7 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
-    if (!await this.confirmation.confirm({ title: 'Inhabilitar cancha', message: 'La cancha quedará inhabilitada durante ' + this.immediateIncidentForm.durationHours + ' horas. Motivo: ' + this.immediateIncidentForm.reason, confirmText: 'Registrar incidente', danger: true })) return;
+    if (!await this.confirmation.confirm({ title: 'Bloquear por incidente', message: 'Se bloquearán únicamente las próximas ' + this.immediateIncidentForm.durationHours + ' horas. Motivo: ' + this.immediateIncidentForm.reason, confirmText: 'Registrar incidente', danger: true })) return;
     this.loading.set(true);
     this.adminService
       .registerImmediateIncident(Number(this.immediateIncidentForm.courtId), {
@@ -446,7 +484,7 @@ export class AdminDashboardComponent implements OnInit {
       .subscribe({
         next: () => {
           this.loading.set(false);
-          this.showSuccess('⚠️ Incidente inmediato registrado. Cancha inhabilitada.');
+          this.showSuccess('Incidente guardado. Los horarios posteriores al bloqueo siguen disponibles.');
         },
         error: (err) => {
           this.loading.set(false);
@@ -465,8 +503,8 @@ export class AdminDashboardComponent implements OnInit {
 
   async toggleStaffStatus(member: StaffItem): Promise<void> {
     if (this.loading()) return;
-    const newStatus = member.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    if (!await this.confirmation.confirm({ title: 'Cambiar acceso del personal', message: member.name + ' pasará al estado ' + newStatus + '.', confirmText: 'Cambiar estado', danger: newStatus === 'INACTIVO' })) return;
+    const newStatus = member.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    if (!await this.confirmation.confirm({ title: 'Cambiar acceso del personal', message: member.name + (newStatus === 'INACTIVE' ? ' quedará inactivo y no podrá iniciar sesión.' : ' quedará activo y podrá iniciar sesión.'), confirmText: 'Cambiar estado', danger: newStatus === 'INACTIVE' })) return;
     this.loading.set(true);
     this.adminService.updateStaffStatus(member.id, newStatus).subscribe({
       next: () => {

@@ -50,4 +50,9 @@ justify-content:space-between;
 
 padding:25px;
 
-}
+}.overlay { padding: 16px; }
+.modal { width: min(420px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; overflow: hidden; }
+.header { flex-shrink: 0; gap: 12px; }
+.header button { min-width: 44px; min-height: 44px; }
+.content { overflow-y: auto; min-height: 0; }
+@media (max-width: 480px) { .header, .content { padding: 16px; } }
