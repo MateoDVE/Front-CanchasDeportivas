@@ -141,6 +141,7 @@ export class AdminDashboardComponent implements OnInit {
     phone: '',
     ci: '',
   };
+  showStaffPassword = false;
 
   // Tab 5: Auditoría de Reservas & Cajas
   auditReservations = signal<any[]>([]);

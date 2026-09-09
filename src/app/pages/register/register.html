@@ -16,7 +16,7 @@
   </div>
 
   <!-- Formulario Registro -->
-  <div class="flex-1 flex items-center justify-center px-6 py-12">
+  <div class="flex-1 flex items-start justify-center px-6 pt-12 sm:pt-20 pb-12">
     <div class="w-full max-w-sm">
       <button (click)="goHome()" class="text-slate-400 text-sm mb-6 flex items-center gap-1">
         ← Volver al inicio
@@ -42,8 +42,9 @@
             [(ngModel)]="form.name"
             name="name"
             type="text"
-            placeholder="Carlos Mendoza"
+            placeholder="Juan Pérez"
             required
+            maxlength="50"
             class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
           />
         </div>
@@ -54,9 +55,11 @@
             <input
               [(ngModel)]="form.ci"
               name="ci"
-              type="text"
+              type="number"
               placeholder="1234567"
               required
+              min="1000000" max="99999999" title="Debe ser entre 1000000 y 99999999"
+              oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)"
               class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
             />
           </div>
@@ -68,6 +71,11 @@
               type="tel"
               placeholder="70123456"
               required
+              pattern="^[67]\d{7}$"
+              maxlength="8"
+              minlength="8"
+              title="Debe tener 8 dígitos y empezar por 6 o 7"
+              oninput="this.value=this.value.replace(/[^0-9]/g, '')"
               class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
             />
           </div>
@@ -81,32 +89,64 @@
             type="email"
             placeholder="correo@ejemplo.com"
             required
+            pattern="^.+@.+\.com$" title="Debe contener un @ y terminar en .com"
+            maxlength="40"
             class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
           />
         </div>
 
         <div>
           <label class="text-sm block mb-1 text-slate-700">Contraseña</label>
-          <input
-            [(ngModel)]="form.password"
-            name="password"
-            type="password"
-            placeholder="•••••••• (mín. 6 caracteres)"
-            required
-            class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
-          />
+          <div class="relative">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="form.password"
+              name="password"
+              placeholder="•••••••• (mín. 6 caracteres)"
+              required
+              maxlength="40"
+              class="w-full border border-slate-300 rounded-xl px-4 py-3 pr-12 focus:outline-emerald-500"
+            />
+            <button type="button" (click)="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 focus:outline-none" title="Mostrar contraseña">
+              @if(showPassword) {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+              }
+            </button>
+          </div>
         </div>
 
         <div>
           <label class="text-sm block mb-1 text-slate-700">Confirmar contraseña</label>
-          <input
-            [(ngModel)]="form.confirmPassword"
-            name="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            required
-            class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
-          />
+          <div class="relative">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              [(ngModel)]="form.confirmPassword"
+              name="confirmPassword"
+              placeholder="••••••••"
+              required
+              maxlength="40"
+              class="w-full border border-slate-300 rounded-xl px-4 py-3 pr-12 focus:outline-emerald-500"
+            />
+            <button type="button" (click)="showConfirmPassword = !showConfirmPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 focus:outline-none" title="Mostrar contraseña">
+              @if(showConfirmPassword) {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+              }
+            </button>
+          </div>
         </div>
 
         <button
