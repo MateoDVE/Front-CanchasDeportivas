@@ -33,7 +33,8 @@ export class NavbarComponent {
 
   activePage = computed(() => {
     if (this.currentPage) return this.currentPage;
-    const url = (this.currentUrl() || this.router.url || '').split('?')[0];
+    const fullUrl = this.currentUrl() || this.router.url || '';
+    const url = fullUrl.split('?')[0].split('#')[0];
     if (url.startsWith('/admin')) return 'admin';
     if (url.startsWith('/secretary')) return 'secretary';
     if (url.startsWith('/my-reservations')) return 'my-reservations';
@@ -45,7 +46,10 @@ export class NavbarComponent {
     ) {
       return 'courts';
     }
-    if (url === '/' || url === '') return 'landing';
+    if (url === '/' || url === '') {
+      if (fullUrl.includes('#como-funciona')) return 'how-it-works';
+      return 'landing';
+    }
     return 'landing';
   });
 
@@ -78,6 +82,14 @@ export class NavbarComponent {
     switch (page) {
       case 'landing':
         this.router.navigate(['/']);
+        break;
+      case 'how-it-works':
+        this.router.navigate(['/'], { fragment: 'como-funciona' }).then(() => {
+          setTimeout(() => {
+            const el = document.getElementById('como-funciona');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        });
         break;
       case 'courts':
         this.router.navigate(['/courts']);

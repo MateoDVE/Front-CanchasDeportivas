@@ -23,6 +23,7 @@ export class LoginComponent {
 
   loading = false;
   errorMessage = '';
+  showPassword = false;
 
   handleSubmit(): void {
     if (!this.form.email || !this.form.password) {

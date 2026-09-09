@@ -27,6 +27,8 @@ export class RegisterComponent {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  showPassword = false;
+  showConfirmPassword = false;
 
   handleSubmit(): void {
     this.errorMessage = '';

@@ -13,7 +13,7 @@
       <button type="button" [class.active]="activePage()==='courts'" (click)="navigate('courts')">
         Canchas
       </button>
-      <button type="button" (click)="navigate('landing')">
+      <button type="button" [class.active]="activePage()==='how-it-works'" (click)="navigate('how-it-works')">
         Cómo funciona
       </button>
       <button type="button" [class.active]="activePage()==='my-reservations'" (click)="navigate('my-reservations')">
@@ -70,6 +70,9 @@
       </button>
       <button type="button" [class.active]="activePage()==='courts'" [attr.aria-current]="activePage()==='courts' ? 'page' : null" (click)="navigate('courts')">
         Canchas
+      </button>
+      <button type="button" [class.active]="activePage()==='how-it-works'" [attr.aria-current]="activePage()==='how-it-works' ? 'page' : null" (click)="navigate('how-it-works')">
+        Cómo funciona
       </button>
       <button type="button" [class.active]="activePage()==='my-reservations'" [attr.aria-current]="activePage()==='my-reservations' ? 'page' : null" (click)="navigate('my-reservations')">
         Mis reservas
