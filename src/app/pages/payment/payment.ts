@@ -74,9 +74,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       this.balance = Number(params['balance']) || Number((this.totalPrice - this.advance).toFixed(2));
       this.amount = this.advance;
 
-      if (params['secondsRemaining']) {
-        this.secondsRemaining = Math.max(0, Number(params['secondsRemaining']));
-      }
+      this.secondsRemaining = 300;
 
       this.loadCourtAndComplex();
       this.loadComplexQr();
@@ -163,7 +161,10 @@ export class PaymentComponent implements OnInit, OnDestroy {
           this.secondsRemaining = 0;
           if (this.timerInterval) clearInterval(this.timerInterval);
         } else if (typeof summary.secondsRemaining === 'number') {
-          this.secondsRemaining = summary.secondsRemaining;
+            this.secondsRemaining = Math.min(
+            summary.secondsRemaining,
+           300
+          );
         }
       },
       error: (err) => {
