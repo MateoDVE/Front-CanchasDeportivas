@@ -13,9 +13,9 @@ import { ClientReservationItem } from '../../models/reservation.model';
   styleUrls: ['./my-reservations.scss'],
 })
 export class MyReservationsComponent implements OnInit {
-  private router = inject(Router);
-  private reservationService = inject(ReservationService);
-  authService = inject(AuthService);
+  private readonly  router = inject(Router);
+  private readonly  reservationService = inject(ReservationService);
+  readonly authService = inject(AuthService);
 
   activeFilter = 'all';
   loading = true;
@@ -25,7 +25,7 @@ export class MyReservationsComponent implements OnInit {
   user = computed(() => this.authService.currentUser());
   userInitials = computed(() => {
     const u = this.user();
-    if (!u || !u.name) return 'U';
+    if (!u?.name) return 'U';
     const parts = u.name.trim().split(/\s+/);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -107,7 +107,7 @@ export class MyReservationsComponent implements OnInit {
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr + 'T12:00:00');
-    if (isNaN(date.getTime())) return dateStr;
+    if (Number.isNaN(date.getTime())) return dateStr;
     const formatted = date.toLocaleDateString('es-BO', {
       weekday: 'short',
       day: 'numeric',

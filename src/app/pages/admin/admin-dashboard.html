@@ -131,7 +131,7 @@
               @if(revenueReport()?.byCourt?.length === 0){
                 <p class="empty-state">No hay registros de facturación por cancha aún.</p>
               } @else {
-                <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
+                <section class="table-scroll" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"> <table class="data-table">
                   <thead>
                     <tr>
                       <th>Cancha</th>
@@ -148,7 +148,7 @@
                       </tr>
                     }
                   </tbody>
-                </table></div>
+                </table></section>
               }
             </div>
           </div>
@@ -245,7 +245,7 @@
           </button>
         </div>
 
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
+        <section class="table-scroll" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>Cancha</th>
@@ -258,7 +258,7 @@
           <tbody>
             @for(court of courts(); track court.id){
               <tr>
-                <td>@if (court.images?.length) { <img [src]="court.images[0]" [alt]="court.name" style="width:72px;height:45px;object-fit:cover;border-radius:8px;margin-bottom:6px" /> }<strong>{{ court.name }}</strong></td>
+                <td>@if (court.images.length) { <img [src]="court.images[0]" [alt]="court.name" style="width:72px;height:45px;object-fit:cover;border-radius:8px;margin-bottom:6px" /> }<strong>{{ court.name }}</strong></td>
                 <td>
                   <span class="badge-role-tag">{{ court.courtType || court.sportType }}</span>
                 </td>
@@ -289,7 +289,7 @@
               </tr>
             }
           </tbody>
-        </table></div>
+        </table></section>
       </section>
     }
 
@@ -300,16 +300,21 @@
       <section class="tab-pane">
         <div class="schedule-config-card">
           <div class="selector-header">
-            <h3>Seleccionar Cancha a Configurar:</h3>
-            <select
-              [ngModel]="selectedCourtForSchedule()"
-              (ngModelChange)="selectedCourtForSchedule.set($event); maintenanceForm.courtId = $event; immediateIncidentForm.courtId = $event; loadCourtSchedules()"
-              class="form-select court-picker"
-            >
-              @for(c of courts(); track c.id){
-                <option [value]="c.id">{{ c.name }} ({{ c.courtType || c.sportType }})</option>
-              }
-            </select>
+           <label for="court-selector">
+             Seleccionar Cancha a Configurar:
+          </label>
+        <select
+          id="court-selector"
+          [ngModel]="selectedCourtForSchedule()"
+          (ngModelChange)="selectedCourtForSchedule.set($event); maintenanceForm.courtId = $event; immediateIncidentForm.courtId = $event; loadCourtSchedules()"
+          class="form-select court-picker"
+        >
+          @for(c of courts(); track c.id){
+            <option [value]="c.id">
+              {{ c.name }} ({{ c.courtType || c.sportType }})
+            </option>
+          }
+        </select>
           </div>
 
           <!-- HORARIOS SEMANALES -->
@@ -323,13 +328,35 @@
                     <input type="checkbox" [(ngModel)]="day.isClosed" />
                     <span>Cerrado</span>
                   </label>
-                  @if(!day.isClosed){
-                    <div class="times-group">
-                      <input type="time" [(ngModel)]="day.openTime" class="time-input" />
-                      <span>a</span>
-                      <input type="time" [(ngModel)]="day.closeTime" class="time-input" />
-                    </div>
-                  }
+                 @if(!day.isClosed){
+                  <div class="times-group">
+
+                    <label [for]="'open-time-' + day.dayOfWeek">
+                      Apertura
+                    </label>
+
+                    <input
+                      type="time"
+                      [id]="'open-time-' + day.dayOfWeek"
+                      [(ngModel)]="day.openTime"
+                      class="time-input"
+                    />
+
+                    <span>a</span>
+
+                    <label [for]="'close-time-' + day.dayOfWeek">
+                      Cierre
+                    </label>
+
+                    <input
+                      type="time"
+                      [id]="'close-time-' + day.dayOfWeek"
+                      [(ngModel)]="day.closeTime"
+                      class="time-input"
+                    />
+
+                  </div>
+}
                 </div>
               }
             </div>
@@ -349,8 +376,9 @@
 
             <form (ngSubmit)="submitMaintenance()" class="mt-3">
               <div class="form-group">
-                <label>Fecha y Hora Inicio:</label>
+                <label label for="maintenance-start">Fecha y Hora Inicio:</label>
                 <input
+                  id="maintenance-start"
                   type="datetime-local"
                   [(ngModel)]="maintenanceForm.startDatetime"
                   name="startDatetime"
@@ -359,8 +387,9 @@
                 />
               </div>
               <div class="form-group">
-                <label>Fecha y Hora Fin:</label>
+                <label label for="maintenance-end">Fecha y Hora Fin:</label>
                 <input
+                  id="maintenance-end"
                   type="datetime-local"
                   [(ngModel)]="maintenanceForm.endDatetime"
                   name="endDatetime"
@@ -369,8 +398,9 @@
                 />
               </div>
               <div class="form-group">
-                <label>Motivo de los Trabajos:</label>
+                <label label for="maintenance-reason">Motivo de los Trabajos:</label>
                 <input
+                  id="maintenance-reason"
                   type="text"
                   [(ngModel)]="maintenanceForm.reason"
                   name="reason"
@@ -391,8 +421,9 @@
 
             <form (ngSubmit)="submitImmediateIncident()" class="mt-3">
               <div class="form-group">
-                <label>Motivo del Incidente:</label>
+                <label for="incident-reason">Motivo del Incidente:</label>
                 <input
+                  id="incident-reason"
                   type="text"
                   [(ngModel)]="immediateIncidentForm.reason"
                   name="reason"
@@ -402,8 +433,9 @@
                 />
               </div>
               <div class="form-group">
-                <label>Duración Estimada de Inhabilitación (Horas):</label>
+                <label for="incident-duration">Duración Estimada de Inhabilitación (Horas):</label>
                 <input
+                  id="incident-duration"
                   type="number"
                   [(ngModel)]="immediateIncidentForm.durationHours"
                   name="durationHours"
@@ -437,7 +469,7 @@
           </button>
         </div>
 
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
+        <section class="table-scroll" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -475,7 +507,7 @@
               </tr>
             }
           </tbody>
-        </table></div>
+        </table></section>
       </section>
     }
 
@@ -493,7 +525,7 @@
         @if(cashShiftsAudit().length === 0){
           <p class="empty-state">No hay registros de cierres de caja en el período.</p>
         } @else {
-          <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table mb-5">
+          <section class="table-scroll" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table mb-5">
             <thead>
               <tr>
                 <th>Turno #</th>
@@ -530,7 +562,7 @@
                 </tr>
               }
             </tbody>
-          </table></div>
+          </table></section>
         }
 
         <!-- HISTORIAL GLOBAL DE RESERVAS -->
@@ -539,7 +571,11 @@
             <h2>Historial Global de Reservas</h2>
             <p>Búsqueda y supervisión de todas las reservas de la plataforma.</p>
           </div>
+            <label for="reservation-status-filter">
+              Filtrar por estado:
+            </label>
           <select
+            id="reservation-status-filter"
             [ngModel]="reservationFilterStatus()"
             (ngModelChange)="reservationFilterStatus.set($event); loadReservationsAudit()"
             class="form-select w-auto"
@@ -552,7 +588,7 @@
           </select>
         </div>
 
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
+        <section class="table-scroll" aria-label="Tabla de datos, desplaza horizontalmente para ver todas las columnas"><table class="data-table">
           <thead>
             <tr>
               <th>ID Reserva</th>
@@ -587,7 +623,7 @@
               </tr>
             }
           </tbody>
-        </table></div>
+        </table></section>
       </section>
     }
   </main>
@@ -597,8 +633,8 @@
 <!-- MODAL: NUEVO COMPLEJO -->
 <!-- ======================================================== -->
 @if(showNewComplexModal()){
-  <div class="modal-backdrop" (click)="showNewComplexModal.set(false)">
-    <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop">
+    <button class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Crear Nuevo Complejo Deportivo</h3>
         <button class="modal-close" (click)="showNewComplexModal.set(false)">✕</button>
@@ -606,25 +642,25 @@
       <form (ngSubmit)="submitNewComplex()">
         <div class="modal-body">
           <div class="form-group">
-            <label>Nombre del Complejo:</label>
-            <input type="text" [(ngModel)]="newComplexForm.name" name="name" required maxlength="30" class="form-input" />
+            <label for="complex-name">Nombre del Complejo:</label>
+            <input id="complex-name"type="text"[(ngModel)]="newComplexForm.name"name="name"required maxlength="30" class="form-input"/>
           </div>
           <div class="form-group">
-            <label>Dirección / Ubicación:</label>
-            <input type="text" [(ngModel)]="newComplexForm.address" name="address" required maxlength="50" class="form-input" />
+            <label for="complex-address">Dirección / Ubicación:</label>
+            <input id="complex-address" type="text" [(ngModel)]="newComplexForm.address" name="address" required maxlength="50" class="form-input" />
           </div>
           <div class="form-group">
-            <label>Teléfono de Contacto:</label>
-            <input type="tel" [(ngModel)]="newComplexForm.phone" name="phone" pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
+            <label for="complex-phone">Teléfono de Contacto:</label>
+            <input id="complex-phone" type="tel" [(ngModel)]="newComplexForm.phone" name="phone" pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
           </div>
           <div class="grid-2">
             <div class="form-group">
-              <label>Hora Apertura:</label>
-              <input type="time" [(ngModel)]="newComplexForm.openingTime" name="open" required class="form-input" />
+              <label for="complex-opening">Hora Apertura:</label>
+              <input id="complex-opening" type="time" [(ngModel)]="newComplexForm.openingTime" name="open" required class="form-input" />
             </div>
             <div class="form-group">
-              <label>Hora Cierre:</label>
-              <input type="time" [(ngModel)]="newComplexForm.closingTime" name="close" required class="form-input" />
+              <label for="complex-closing">Hora Cierre:</label>
+              <input id="complex-closing" type="time" [(ngModel)]="newComplexForm.closingTime" name="close" required class="form-input" />
             </div>
           </div>
         </div>
@@ -633,7 +669,7 @@
           <button type="submit" [disabled]="loading()" class="btn btn-primary">Crear Complejo</button>
         </div>
       </form>
-    </div>
+    </button>
   </div>
 }
 
@@ -641,8 +677,8 @@
 <!-- MODAL: NUEVA CANCHA -->
 <!-- ======================================================== -->
 @if(showNewCourtModal()){
-  <div class="modal-backdrop" (click)="showNewCourtModal.set(false)">
-    <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop">
+    <button class="modal-close" (click)="showNewCourtModal.set(false)">✕>
       <div class="modal-header">
         <h3>Registrar Nueva Cancha</h3>
         <button class="modal-close" (click)="showNewCourtModal.set(false)">✕</button>
@@ -650,21 +686,21 @@
       <form (ngSubmit)="submitNewCourt()">
         <div class="modal-body">
           <div class="form-group">
-            <label>Complejo Perteneciente:</label>
-            <select [(ngModel)]="newCourtForm.complexId" name="complexId" class="form-select" required>
+            <label for="court-complex">Complejo Perteneciente:</label>
+            <select id="court-complex" [(ngModel)]="newCourtForm.complexId" name="complexId" class="form-select" required>
               @for(c of complexes(); track c.id){
                 <option [value]="c.id">{{ c.name }}</option>
               }
             </select>
           </div>
           <div class="form-group">
-            <label>Nombre de la Cancha:</label>
-            <input type="text" [(ngModel)]="newCourtForm.name" name="courtName" placeholder="Ej: Cancha Sintética A" required maxlength="30" class="form-input" />
+            <label for="court-name">Nombre de la Cancha:</label>
+            <input id="court-name" type="text" [(ngModel)]="newCourtForm.name" name="courtName" placeholder="Ej: Cancha Sintética A" required maxlength="30" class="form-input" />
           </div>
           <div class="grid-2">
             <div class="form-group">
-              <label>Tipo de Cancha / Deporte:</label>
-              <select [(ngModel)]="newCourtForm.courtType" name="courtType" class="form-select" required>
+              <label for="court-type">Tipo de Cancha / Deporte:</label>
+              <select id="court-type" [(ngModel)]="newCourtForm.courtType" name="courtType" class="form-select" required>
                 <option value="Futsal">Futsal</option>
                 <option value="Wally">Wally</option>
                 <option value="Racket">Racket</option>
@@ -673,8 +709,8 @@
               <app-court-cover [value]="newCourtCover()" (valueChange)="newCourtCover.set($event)" [disabled]="loading()" />
             </div>
             <div class="form-group">
-              <label>Tarifa por Hora (Bs):</label>
-              <input type="number" [(ngModel)]="newCourtForm.pricePerHour" name="price" min="1" required class="form-input" />
+              <label for="court-price">Tarifa por Hora (Bs):</label>
+              <input id="court-price" type="number" [(ngModel)]="newCourtForm.pricePerHour" name="price" min="1" required class="form-input" />
             </div>
           </div>
         </div>
@@ -683,7 +719,7 @@
           <button type="submit" [disabled]="loading()" class="btn btn-primary">Registrar Cancha</button>
         </div>
       </form>
-    </div>
+    </button>
   </div>
 }
 
@@ -691,8 +727,8 @@
 <!-- MODAL: AJUSTAR PRECIO CANCHA -->
 <!-- ======================================================== -->
 @if(showEditPriceModal()){
-  <div class="modal-backdrop" (click)="showEditPriceModal.set(false)">
-    <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop">
+    <div class="modal-box">
       <div class="modal-header">
         <h3>Ajustar Precio por Hora</h3>
         <button class="modal-close" (click)="showEditPriceModal.set(false)">✕</button>
@@ -700,8 +736,9 @@
       <div class="modal-body">
         <p>Actualizar tarifa para: <strong>{{ selectedCourtForPrice()?.name }}</strong></p>
         <div class="form-group">
-          <label>Nuevo Precio por Hora (Bs):</label>
+          <label for="court-new-price">Nuevo Precio por Hora (Bs):</label>
           <input
+            id="court-new-price"
             type="number"
             [ngModel]="newCourtPrice()"
             (ngModelChange)="newCourtPrice.set($event)"
@@ -722,8 +759,8 @@
 <!-- MODAL: CONFIGURAR QR COMPLEJO -->
 <!-- ======================================================== -->
 @if(showQrModal()){
-  <div class="modal-backdrop" (click)="showQrModal.set(false)">
-    <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop">
+    <div class="modal-box">
       <div class="modal-header">
         <h3>Configurar Código QR de Pago</h3>
         <button class="modal-close" (click)="showQrModal.set(false)">✕</button>
@@ -731,8 +768,9 @@
       <div class="modal-body">
         <p>Sede: <strong>{{ selectedComplexForQr()?.name }}</strong></p>
         <div class="form-group">
-          <label>URL o Base64 del Código QR:</label>
+          <label for="qr-url">URL o Base64 del Código QR:</label>
           <input
+            id="qr-url"
             type="text"
             [ngModel]="newQrUrl()"
             (ngModelChange)="newQrUrl.set($event)"
@@ -753,8 +791,8 @@
 <!-- MODAL: NUEVA SECRETARIA -->
 <!-- ======================================================== -->
 @if(showNewStaffModal()){
-  <div class="modal-backdrop" (click)="showNewStaffModal.set(false)">
-    <div class="modal-box" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop">
+    <div class="modal-box">
       <div class="modal-header">
         <h3>Crear Cuenta de Personal (Secretaría)</h3>
         <button class="modal-close" (click)="showNewStaffModal.set(false)">✕</button>
@@ -762,27 +800,27 @@
       <form (ngSubmit)="submitNewStaff()">
         <div class="modal-body">
           <div class="form-group">
-            <label>Nombre Completo:</label>
-            <input type="text" [(ngModel)]="newStaffForm.name" name="name" required maxlength="50" class="form-input" />
+            <label for="staff-name">Nombre Completo:</label>
+            <input id="staff-name" type="text" [(ngModel)]="newStaffForm.name" name="name" required maxlength="50" class="form-input" />
           </div>
           <div class="grid-2">
             <div class="form-group">
-              <label>Cédula de Identidad (CI):</label>
-              <input type="number" [(ngModel)]="newStaffForm.ci" name="ci" required min="1000000" max="99999999" title="Debe ser entre 1000000 y 99999999" oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)" class="form-input" />
+              <label for="staff-ci">Cédula de Identidad (CI):</label>
+              <input id="staff-ci" type="number" [(ngModel)]="newStaffForm.ci" name="ci" required min="1000000" max="99999999" title="Debe ser entre 1000000 y 99999999" oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)" class="form-input" />
             </div>
             <div class="form-group">
-              <label>Teléfono:</label>
-              <input type="tel" [(ngModel)]="newStaffForm.phone" name="phone" required pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
+              <label for="staff-phone">Teléfono:</label>
+              <input id="staff-phone" type="tel" [(ngModel)]="newStaffForm.phone" name="phone" required pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
             </div>
           </div>
           <div class="form-group">
-            <label>Correo Electrónico:</label>
-            <input type="email" [(ngModel)]="newStaffForm.email" name="email" required pattern="^.+@.+\.com$" maxlength="40" title="Debe contener un @ y terminar en .com" class="form-input" />
+            <label for="staff-email">Correo Electrónico:</label>
+            <input id="staff-email" type="email" [(ngModel)]="newStaffForm.email" name="email" required pattern="^.+@.+\.com$" maxlength="40" title="Debe contener un @ y terminar en .com" class="form-input" />
           </div>
           <div class="form-group">
-            <label>Contraseña:</label>
+            <label for="staff-password">Contraseña:</label>
             <div style="position: relative;">
-              <input [type]="showStaffPassword ? 'text' : 'password'" [(ngModel)]="newStaffForm.password" name="password" required maxlength="40" class="form-input" style="padding-right: 3rem;" />
+              <input id="staff-password" [type]="showStaffPassword ? 'text' : 'password'" [(ngModel)]="newStaffForm.password" name="password" required maxlength="40" class="form-input" style="padding-right: 3rem;" />
               <button type="button" (click)="showStaffPassword = !showStaffPassword" title="Mostrar contraseña" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8;">
                 @if(showStaffPassword) {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">
@@ -809,7 +847,7 @@
 
 @if (selectedCoverCourt(); as court) {
   <div class="modal-backdrop">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="cover-title">
+    <div class="modal-box" aria-labelledby="cover-title">
       <div class="modal-header"><h3 id="cover-title">Portada de {{ court.name }}</h3></div>
       <div class="modal-body">
         <p>Esta imagen se mostrará en el catálogo y en el detalle de la cancha.</p>
