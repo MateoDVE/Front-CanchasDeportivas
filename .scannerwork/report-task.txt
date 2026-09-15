@@ -1,0 +1,6 @@
+projectKey=GestionCalidadAPI
+serverUrl=http://localhost:9000
+serverVersion=26.9.0.129388
+dashboardUrl=http://localhost:9000/dashboard?id=GestionCalidadAPI
+ceTaskId=fd037319-ca39-49b7-89d7-516bfca5a7ad
+ceTaskUrl=http://localhost:9000/api/ce/task?id=fd037319-ca39-49b7-89d7-516bfca5a7ad

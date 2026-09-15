@@ -12,9 +12,9 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./login.scss'],
 })
 export class LoginComponent {
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
 
   form = {
     email: '',
@@ -53,7 +53,7 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
-        if (err.error && err.error.message) {
+        if (err.error?.message) {
           this.errorMessage = Array.isArray(err.error.message)
             ? err.error.message.join(', ')
             : err.error.message;

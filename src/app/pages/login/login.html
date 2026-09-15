@@ -3,6 +3,7 @@
   <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
     <img
       src="https://images.unsplash.com/photo-1775993167393-f2add1f8eec2?w=800"
+      alt="Cancha deportiva para reservas"
       class="w-full h-full object-cover"
     />
     <div class="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-emerald-900/50 to-slate-900/60"></div>
@@ -42,8 +43,9 @@
 
       <form (ngSubmit)="handleSubmit()" class="space-y-4">
         <div>
-          <label class="block text-sm mb-2 text-slate-700">Correo electrónico</label>
+          <label for="login-email" class="block text-sm mb-2 text-slate-700">Correo electrónico</label>
           <input
+            id="login-email"
             type="email"
             [(ngModel)]="form.email"
             name="email"
@@ -54,9 +56,10 @@
         </div>
 
         <div>
-          <label class="block text-sm mb-2 text-slate-700">Contraseña</label>
+          <label for="login-password" class="block text-sm mb-2 text-slate-700">Contraseña</label>
           <div class="relative">
             <input
+              id="login-password"
               [type]="showPassword ? 'text' : 'password'"
               [(ngModel)]="form.password"
               name="password"
