@@ -332,7 +332,7 @@ var assemblies = [
       { "name": "court.service.ts", "rp": "app.services_ts.5.html", "cl": 16, "ucl": 0, "cal": 16, "tl": 42, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "payment.service.ts", "rp": "app.services_ts.6.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 20, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "reservation.service.ts", "rp": "app.services_ts.7.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 36, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "secretary.service.ts", "rp": "app.services_ts.8.html", "cl": 1, "ucl": 61, "cal": 62, "tl": 250, "cb": 0, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "secretary.service.ts", "rp": "app.services_ts.8.html", "cl": 42, "ucl": 20, "cal": 62, "tl": 250, "cb": 6, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "environments",
