@@ -84,14 +84,14 @@ export class AdminDashboardComponent implements OnInit {
   selectedComplexForQr = signal<Complex | null>(null);
   newQrUrl = signal<string>('');
 
-  newComplexForm = {
-    name: '',
-    address: '',
-    phone: '',
-    openingTime: '08:00',
-    closingTime: '23:00',
-    cancellationPolicy: 'Cancelación permitida con 2 horas de anticipación',
-  };
+  editingComplexId = signal<number | null>(null);
+  newComplexForm = { name: '', location: '', contactInfo: '' };
+
+  openComplexForm(complex?: Complex): void {
+    this.editingComplexId.set(complex?.id ?? null);
+    this.newComplexForm = { name: complex?.name ?? '', location: complex?.location ?? '', contactInfo: complex?.contactInfo ?? '' };
+    this.showNewComplexModal.set(true);
+  }
 
   newCourtForm: {
     complexId: number;
@@ -139,7 +139,6 @@ export class AdminDashboardComponent implements OnInit {
     password: '',
     name: '',
     phone: '',
-    ci: '',
   };
   showStaffPassword = false;
 
@@ -214,7 +213,7 @@ export class AdminDashboardComponent implements OnInit {
 
   // === TAB 2: COMPLEJOS Y CANCHAS ===
   loadComplexesAndCourts(): void {
-    this.complexService.getActiveComplexes().subscribe({
+    this.adminService.getAllComplexes().subscribe({
       next: (comps) => {
         this.complexes.set(comps);
         if (comps.length > 0 && this.newCourtForm.complexId === 0) {
@@ -246,7 +245,9 @@ export class AdminDashboardComponent implements OnInit {
     if (this.loading()) return;
     if (!await this.confirmation.confirm({ title: 'Cambiar estado del complejo', message: 'Se cambiará la disponibilidad de ' + (this.complexes().find(c => c.id === complexId)?.name || 'este complejo') + '.', confirmText: 'Cambiar estado', danger: true })) return;
     this.loading.set(true);
-    this.adminService.toggleComplex(complexId).subscribe({
+    const request = this.complexes().find(c => c.id === complexId)?.isActive
+      ? this.adminService.deactivateComplex(complexId) : this.adminService.toggleComplex(complexId);
+    request.subscribe({
       next: () => {
         this.loading.set(false);
         this.showSuccess('Estado del complejo actualizado.');
@@ -260,16 +261,18 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   submitNewComplex(): void {
-    if (!this.newComplexForm.name || !this.newComplexForm.address) {
-      this.showError('Nombre y dirección del complejo son requeridos.');
+    if (!this.newComplexForm.name.trim() || !this.newComplexForm.location.trim() || !this.newComplexForm.contactInfo.trim()) {
+      this.showError('Nombre, ubicación y contacto son requeridos.');
       return;
     }
 
     this.loading.set(true);
-    this.adminService.createComplex(this.newComplexForm).subscribe({
+    const id = this.editingComplexId();
+    const request = id === null ? this.adminService.createComplex(this.newComplexForm) : this.adminService.updateComplex(id, this.newComplexForm);
+    request.subscribe({
       next: () => {
         this.loading.set(false);
-        this.showSuccess('✅ Complejo deportivo creado exitosamente.');
+        this.showSuccess('Complejo guardado correctamente.');
         this.showNewComplexModal.set(false);
         this.loadComplexesAndCourts();
       },
@@ -521,8 +524,8 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   submitNewStaff(): void {
-    if (!this.newStaffForm.email || !this.newStaffForm.password || !this.newStaffForm.name || !this.newStaffForm.ci) {
-      this.showError('Por favor completa todos los campos del personal (Email, Clave, Nombre, CI).');
+    if (!this.newStaffForm.email || !this.newStaffForm.password || !this.newStaffForm.name) {
+      this.showError('Por favor completa todos los campos del personal (Email, Clave, Nombre).');
       return;
     }
 
@@ -533,7 +536,7 @@ export class AdminDashboardComponent implements OnInit {
         this.showSuccess('✅ Cuenta de personal creada con éxito.');
         this.showNewStaffModal.set(false);
         this.loadStaff();
-        this.newStaffForm = { email: '', password: '', name: '', phone: '', ci: '' };
+        this.newStaffForm = { email: '', password: '', name: '', phone: '' };
       },
       error: (err) => {
         this.loading.set(false);

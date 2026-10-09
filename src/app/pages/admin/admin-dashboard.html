@@ -144,7 +144,7 @@
                       <tr>
                         <td><strong>{{ c.courtName }}</strong></td>
                         <td>{{ c.count }} turnos</td>
-                        <td><strong class="text-emerald">Bs {{ c.totalAmount }}</strong></td>
+                        <td><strong class="text-emerald">Bs {{ (c.totalAmount) | number:'1.2-2' }}</strong></td>
                       </tr>
                     }
                   </tbody>
@@ -189,7 +189,7 @@
             <h2>Sedes y Complejos Deportivos</h2>
             <p>Configura las sedes, horarios de apertura y códigos QR de pago.</p>
           </div>
-          <button (click)="showNewComplexModal.set(true)" class="btn btn-primary">
+          <button (click)="openComplexForm()" class="btn btn-primary">
             + Nuevo Complejo
           </button>
         </div>
@@ -200,7 +200,7 @@
               <div class="complex-card-header">
                 <div>
                   <h3>{{ comp.name }}</h3>
-                  <small>{{ comp.address }}</small>
+                  <small>{{ comp.location }}</small>
                 </div>
                 <span class="status-badge" [class.active]="comp.isActive">
                   {{ comp.isActive ? 'ACTIVO' : 'INACTIVO' }}
@@ -208,8 +208,8 @@
               </div>
 
               <div class="complex-body">
-                <p>📞 Tel: {{ comp.phone || 'No registrado' }}</p>
-                <p>⏰ Horario: {{ comp.openingTime }} - {{ comp.closingTime }}</p>
+                <p>📞 Tel: {{ comp.contactInfo || 'No registrado' }}</p>
+                <p>Horarios configurados por cancha.</p>
                 @if(comp.paymentQrUrl){
                   <div class="qr-preview-badge">
                     <span>📱 QR Configurado</span>
@@ -218,6 +218,7 @@
               </div>
 
               <div class="complex-footer">
+                <button (click)="openComplexForm(comp)" class="btn-sm btn-outline">Editar</button>
                 <button (click)="openQrModal(comp)" class="btn-sm btn-outline">
                   Configurar QR
                 </button>
@@ -263,7 +264,7 @@
                   <span class="badge-role-tag">{{ court.courtType || court.sportType }}</span>
                 </td>
                 <td>
-                  <strong class="text-emerald">Bs {{ court.pricePerHour }}/hr</strong>
+                  <strong class="text-emerald">Bs {{ (court.pricePerHour) | number:'1.2-2' }}/hr</strong>
                 </td>
                 <td>
                   <span class="status-badge" [class.active]="court.isActive">
@@ -474,7 +475,6 @@
             <tr>
               <th>Nombre</th>
               <th>Correo Electrónico</th>
-              <th>Cédula (CI)</th>
               <th>Teléfono</th>
               <th>Rol</th>
               <th>Estado</th>
@@ -486,7 +486,6 @@
               <tr>
                 <td><strong>{{ m.name }}</strong></td>
                 <td>{{ m.email }}</td>
-                <td>{{ m.ci }}</td>
                 <td>{{ m.phone || 'N/A' }}</td>
                 <td><span class="badge-role-tag">{{ m.role }}</span></td>
                 <td>
@@ -544,11 +543,11 @@
                   <td><b>#{{ s.shiftId }}</b></td>
                   <td>{{ s.secretaryName || s.secretaryId }}</td>
                   <td>{{ s.date }}</td>
-                  <td>Bs {{ s.totalCash }}</td>
-                  <td>Bs {{ s.totalDeclaredCash }}</td>
+                  <td>Bs {{ (s.totalCash) | number:'1.2-2' }}</td>
+                  <td>Bs {{ (s.totalDeclaredCash) | number:'1.2-2' }}</td>
                   <td>
                     <strong [class.text-danger]="s.difference < 0" [class.text-emerald]="s.difference >= 0">
-                      Bs {{ s.difference }}
+                      Bs {{ (s.difference) | number:'1.2-2' }}
                     </strong>
                   </td>
                   <td>
@@ -607,7 +606,7 @@
                 <td><strong>{{ r.courtName || r.courtId }}</strong></td>
                 <td>{{ r.reservationDate }}</td>
                 <td>{{ r.startTime }} - {{ r.endTime }}</td>
-                <td><strong>Bs {{ r.totalAmount }}</strong></td>
+                <td><strong>Bs {{ (r.totalAmount) | number:'1.2-2' }}</strong></td>
                 <td>
                   <span class="status-pill status-{{ r.status?.toLowerCase() }}">
                     {{ r.status }}
@@ -634,42 +633,33 @@
 <!-- ======================================================== -->
 @if(showNewComplexModal()){
   <div class="modal-backdrop">
-    <button class="modal-box" (click)="$event.stopPropagation()">
+    <div role="dialog" aria-modal="true" aria-label="Complejo deportivo" class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Crear Nuevo Complejo Deportivo</h3>
+        <h3>{{ editingComplexId() === null ? 'Crear complejo' : 'Editar complejo' }}</h3>
         <button class="modal-close" (click)="showNewComplexModal.set(false)">✕</button>
       </div>
       <form (ngSubmit)="submitNewComplex()">
         <div class="modal-body">
           <div class="form-group">
             <label for="complex-name">Nombre del Complejo:</label>
-            <input id="complex-name"type="text"[(ngModel)]="newComplexForm.name"name="name"required maxlength="30" class="form-input"/>
+            <input id="complex-name"type="text"[(ngModel)]="newComplexForm.name"name="name"required maxlength="100" class="form-input"/>
           </div>
           <div class="form-group">
             <label for="complex-address">Dirección / Ubicación:</label>
-            <input id="complex-address" type="text" [(ngModel)]="newComplexForm.address" name="address" required maxlength="50" class="form-input" />
+            <input id="complex-address" type="text" [(ngModel)]="newComplexForm.location" name="address" required maxlength="255" class="form-input" />
           </div>
           <div class="form-group">
-            <label for="complex-phone">Teléfono de Contacto:</label>
-            <input id="complex-phone" type="tel" [(ngModel)]="newComplexForm.phone" name="phone" pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
+            <label for="complex-phone">Información de contacto:</label>
+            <input id="complex-phone" type="text" [(ngModel)]="newComplexForm.contactInfo" name="contactInfo" required maxlength="255" class="form-input" />
           </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label for="complex-opening">Hora Apertura:</label>
-              <input id="complex-opening" type="time" [(ngModel)]="newComplexForm.openingTime" name="open" required class="form-input" />
-            </div>
-            <div class="form-group">
-              <label for="complex-closing">Hora Cierre:</label>
-              <input id="complex-closing" type="time" [(ngModel)]="newComplexForm.closingTime" name="close" required class="form-input" />
-            </div>
-          </div>
+          <p>Los horarios se administran en la pestaña Horarios, por cancha.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" (click)="showNewComplexModal.set(false)">Cancelar</button>
-          <button type="submit" [disabled]="loading()" class="btn btn-primary">Crear Complejo</button>
+          <button type="submit" [disabled]="loading()" class="btn btn-primary">Guardar complejo</button>
         </div>
       </form>
-    </button>
+    </div>
   </div>
 }
 
@@ -805,22 +795,18 @@
           </div>
           <div class="grid-2">
             <div class="form-group">
-              <label for="staff-ci">Cédula de Identidad (CI):</label>
-              <input id="staff-ci" type="number" [(ngModel)]="newStaffForm.ci" name="ci" required min="1000000" max="99999999" title="Debe ser entre 1000000 y 99999999" oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)" class="form-input" />
-            </div>
-            <div class="form-group">
               <label for="staff-phone">Teléfono:</label>
               <input id="staff-phone" type="tel" [(ngModel)]="newStaffForm.phone" name="phone" required pattern="^[67]\d{7}$" maxlength="8" minlength="8" title="Debe tener 8 dígitos y empezar por 6 o 7" oninput="this.value=this.value.replace(/[^0-9]/g, '')" class="form-input" />
             </div>
           </div>
           <div class="form-group">
             <label for="staff-email">Correo Electrónico:</label>
-            <input id="staff-email" type="email" [(ngModel)]="newStaffForm.email" name="email" required pattern="^.+@.+\.com$" maxlength="40" title="Debe contener un @ y terminar en .com" class="form-input" />
+            <input id="staff-email" type="email" [(ngModel)]="newStaffForm.email" name="email" required maxlength="100" class="form-input" />
           </div>
           <div class="form-group">
             <label for="staff-password">Contraseña:</label>
             <div style="position: relative;">
-              <input id="staff-password" [type]="showStaffPassword ? 'text' : 'password'" [(ngModel)]="newStaffForm.password" name="password" required maxlength="40" class="form-input" style="padding-right: 3rem;" />
+              <input id="staff-password" [type]="showStaffPassword ? 'text' : 'password'" [(ngModel)]="newStaffForm.password" name="password" required minlength="8" maxlength="72" class="form-input" style="padding-right: 3rem;" />
               <button type="button" (click)="showStaffPassword = !showStaffPassword" title="Mostrar contraseña" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8;">
                 @if(showStaffPassword) {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">

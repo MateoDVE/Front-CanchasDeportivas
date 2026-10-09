@@ -114,9 +114,8 @@ describe('AdminService', () => {
   it('should create complex', () => {
     const payload = {
       name: 'Complejo Central',
-      address: 'Av. Principal',
-      openingTime: '08:00',
-      closingTime: '22:00',
+      location: 'Av. Principal',
+      contactInfo: '70123456',
     };
 
     service.createComplex(payload).subscribe();

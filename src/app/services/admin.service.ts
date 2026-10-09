@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Complex } from '../models/complex.model';
 import { Court } from '../models/court.model';
 
 export interface KpiSummary {
@@ -35,7 +36,6 @@ export interface StaffItem {
   email: string;
   name: string;
   phone: string;
-  ci: string;
   role: string;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
@@ -46,7 +46,6 @@ export interface CreateStaffDto {
   password: string;
   name: string;
   phone: string;
-  ci: string;
 }
 
 export interface CourtScheduleItem {
@@ -119,29 +118,20 @@ export class AdminService {
   }
 
   // === COMPLEXES ===
-  createComplex(payload: {
-    name: string;
-    address: string;
-    phone?: string;
-    openingTime: string;
-    closingTime: string;
-    cancellationPolicy?: string;
-  }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/complexes`, payload);
+  getAllComplexes(): Observable<Complex[]> {
+    return this.http.get<Complex[]>(`${this.baseUrl}/complexes`);
   }
 
-  updateComplex(
-    id: number,
-    payload: {
-      name?: string;
-      address?: string;
-      phone?: string;
-      openingTime?: string;
-      closingTime?: string;
-      cancellationPolicy?: string;
-    },
-  ): Observable<any> {
-    return this.http.put(`${this.baseUrl}/complexes/${id}`, payload);
+  createComplex(payload: { name: string; location: string; contactInfo: string }): Observable<Complex> {
+    return this.http.post<Complex>(`${this.baseUrl}/complexes`, payload);
+  }
+
+  updateComplex(id: number, payload: { name: string; location: string; contactInfo: string }): Observable<Complex> {
+    return this.http.put<Complex>(`${this.baseUrl}/complexes/${id}`, payload);
+  }
+
+  deactivateComplex(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/complexes/${id}`);
   }
 
   toggleComplex(id: number): Observable<any> {

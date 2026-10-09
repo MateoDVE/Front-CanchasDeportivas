@@ -35,7 +35,6 @@ export interface PendingPaymentItem {
   paymentId: number;
   reservationId: string;
   clientName: string;
-  clientCi?: string;
   courtName: string;
   complexName: string;
   reservationDate: string;
@@ -67,7 +66,6 @@ export interface ShiftSummaryOutput {
 export interface ClientSearchResult {
   id: string;
   name: string;
-  ci: string;
   phone: string;
   email: string;
 }

@@ -36,6 +36,28 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
 
   // Tab 2: Validación de Anticipos
   pendingPayments = signal<PendingPaymentItem[]>([]);
+  receiptDetail = signal<any | null>(null);
+  receiptDetailOpen = signal(false);
+  receiptDetailLoading = signal(false);
+  receiptDetailError = signal('');
+  private receiptDetailRequest?: { unsubscribe(): void };
+
+  viewPaymentDetails(payment: PendingPaymentItem): void {
+    this.receiptDetailRequest?.unsubscribe();
+    this.receiptDetail.set(null);
+    this.receiptDetailOpen.set(true);
+    this.receiptDetailLoading.set(true);
+    this.receiptDetailError.set('');
+    this.receiptDetailRequest = this.secretaryService.getReservationDetail(payment.reservationId).subscribe({
+      next: detail => { this.receiptDetail.set(detail); this.receiptDetailLoading.set(false); },
+      error: () => { this.receiptDetailError.set('No se pudo cargar el detalle. Cierra e intenta nuevamente.'); this.receiptDetailLoading.set(false); },
+    });
+  }
+  closeReceiptDetails(): void {
+    this.receiptDetailRequest?.unsubscribe();
+    this.receiptDetailOpen.set(false);
+    this.receiptDetail.set(null);
+  }
   selectedReceiptImage = signal<string | null>(null);
   rejectionReason = signal<string>('');
   rejectingPaymentId = signal<number | null>(null);
@@ -61,6 +83,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   private clientSearchVersion = 0;
 
   ngOnDestroy(): void {
+    this.receiptDetailRequest?.unsubscribe();
     clearTimeout(this.clientSearchTimer);
     this.clientSearchVersion++;
   }
