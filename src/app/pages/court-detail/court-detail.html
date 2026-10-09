@@ -330,7 +330,7 @@
           <div class="flex gap-2 flex-wrap">
 
             <button
-              *ngFor="let d of [1, 2, 3]"
+              *ngFor="let d of [0.5, 1, 1.5, 2, 2.5, 3]"
               (click)="setDuration(d)"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border"
               [ngClass]="
@@ -339,7 +339,7 @@
                   : 'border-slate-200 text-slate-600 hover:border-emerald-300'
               "
             >
-              {{ d }}h
+              {{ d * 60 }} min
             </button>
 
           </div>

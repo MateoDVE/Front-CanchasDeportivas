@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { ReservationService } from '../../services/reservation.service';
 import { AuthService } from '../../services/auth.service';
 import { CourtService } from '../../services/court.service';
 import { ComplexService } from '../../services/complex.service';
@@ -15,6 +16,7 @@ import { ComplexService } from '../../services/complex.service';
 })
 export class BookingFlowComponent implements OnInit {
   private router = inject(Router);
+  private reservations = inject(ReservationService);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private courtService = inject(CourtService);
@@ -50,30 +52,15 @@ export class BookingFlowComponent implements OnInit {
       this.form.email = user.email || '';
     }
 
-    this.route.queryParams.subscribe((params) => {
-      this.reservationId = params['reservationId'] || '';
-      this.date = params['date'] || this.date;
-      this.startTime = params['startTime'] || this.startTime;
-      this.endTime = params['endTime'] || this.endTime;
-      this.duration = Number(params['duration']) || 1;
-      this.totalPrice = Number(params['totalPrice']) || 80;
-      this.advance = Number(params['advance']) || Number((this.totalPrice * 0.25).toFixed(2));
-
-      const courtId = Number(params['courtId']);
-      if (!Number.isInteger(courtId) || courtId < 1) { this.loadError = 'Selecciona una cancha para continuar.'; return; }
-      this.courtService.getCourtById(courtId).subscribe({
-        next: (court) => {
-          this.court = court;
-          this.complexService.getActiveComplexes().subscribe({next: (complexes) => {
-            const found = complexes.find((c) => c.id === court.complexId);
-            if (found) {
-              this.establishment = found;
-            } else { this.loadError = "El complejo no está disponible."; }
-          }, error: () => { this.loadError = "No se pudo cargar el complejo."; }});
-        },
-        error: () => { this.loadError = "No se pudo cargar la cancha."; }
-      });
-    });
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (!token) { this.loadError = 'Abre la reserva desde Mis reservas.'; return; }
+    this.reservations.resolveRoute(token).subscribe({ next: summary => {
+      this.reservationId = summary.reservationId;
+      this.date = summary.reservationDate; this.startTime = summary.startTime; this.endTime = summary.endTime;
+      this.totalPrice = summary.totalPrice; this.advance = summary.advanceRequired;
+      this.court = { id: summary.courtId, name: summary.courtName };
+      this.establishment = { name: summary.complexName };
+    }, error: () => { this.loadError = 'El enlace de reserva es inválido o ha vencido.'; } });
   }
 
   getEndTime(): string {
@@ -92,21 +79,8 @@ export class BookingFlowComponent implements OnInit {
   }
 
   goPayment(): void {
-    this.router.navigate(['/payment'], {
-      queryParams: {
-        reservationId: this.reservationId,
-        courtId: this.court.id,
-        complexId: this.court.complexId,
-        date: this.date,
-        startTime: this.startTime,
-        endTime: this.getEndTime(),
-        duration: this.duration,
-        totalPrice: this.totalPrice,
-        advance: this.advance,
-        clientName: this.form.name,
-        clientPhone: this.form.phone,
-        clientEmail: this.form.email,
-      },
+    this.reservations.navigateToReservation('/payment', this.reservationId).subscribe({
+      error: () => { this.loadError = 'No se pudo abrir el pago.'; },
     });
   }
 

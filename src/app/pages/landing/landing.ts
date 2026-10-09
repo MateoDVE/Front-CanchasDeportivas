@@ -33,7 +33,7 @@ export class LandingComponent implements OnInit {
     {
       n: '02',
       title: 'Consulta disponibilidad en vivo',
-      desc: 'Revisa el calendario interactivo y elige el horario de 1 hora que prefieras.',
+      desc: 'Revisa el calendario interactivo y elige el horario en bloques de 30 minutos que prefieras.',
     },
     {
       n: '03',

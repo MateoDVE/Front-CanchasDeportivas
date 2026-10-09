@@ -239,7 +239,7 @@ export class CourtDetailComponent implements OnInit {
   }
 
   setDuration(value: number): void {
-    if (!Number.isInteger(value) || value < 1 || value > 3) return;
+    if (!Number.isInteger(value * 2) || value < 0.5 || value > 3) return;
     this.duration = value;
     this.selectedStart = null;
   }
@@ -312,21 +312,8 @@ export class CourtDetailComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.bookingLoading = false;
-          this.router.navigate(['/payment'], {
-            queryParams: {
-              reservationId: res.reservationId,
-              courtId: this.court!.id,
-              complexId: this.court!.complexId,
-              date: res.reservationDate,
-              startTime: res.startTime,
-              endTime: res.endTime,
-              duration: res.durationHours,
-              totalPrice: res.totalPrice,
-              advance: res.advanceRequired,
-              balance: res.pendingBalance,
-              expiresAt: res.expiresAt,
-              secondsRemaining: res.secondsRemaining,
-            },
+          this.reservationService.navigateToReservation('/payment', res.reservationId).subscribe({
+            error: () => { this.bookingError = 'No se pudo abrir el pago. Puedes reintentarlo desde Mis reservas.'; },
           });
         },
         error: (err) => {
