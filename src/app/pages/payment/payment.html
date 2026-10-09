@@ -3,13 +3,15 @@
     ← Volver al detalle de cancha
   </button>
 
+  @if(errorMessage && !ready) { <p role="alert" class="text-rose-700 p-4">{{ errorMessage }}</p><button (click)="goReservations()">Ir a Mis reservas</button> }
+  @if(!ready && !errorMessage && !isExpired) { <p role="status">Verificando reserva…</p> }
   <!-- ALERTA DE RESERVA EXPIRADA -->
   @if(isExpired && !submitted) {
-    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center mb-6 shadow-sm">
+    <div role="alert" class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center mb-6 shadow-sm">
       <div class="text-4xl mb-2">⌛</div>
-      <h2 class="text-lg font-bold text-rose-900">Tiempo de reserva expirado</h2>
+      <h2 class="text-lg font-bold text-rose-900">Tu reserva se canceló por vencimiento</h2>
       <p class="text-xs text-rose-600 mt-1 mb-5">
-        El bloqueo temporal de 5 minutos ha concluido. El horario ha sido liberado para otros clientes.
+        El plazo para enviar el comprobante terminó y el horario vuelve a estar disponible. Si ya hiciste la transferencia, contacta al complejo con tu comprobante.
       </p>
       <button
         (click)="goCourts()"
@@ -32,7 +34,7 @@
       </h2>
 
       <p class="text-slate-500 text-sm mt-2">
-        Tu anticipo de <strong>Bs {{ advance }}</strong> está en estado <span class="text-amber-700 font-semibold">PENDIENTE DE VALIDACIÓN</span>.
+        Tu anticipo de <strong>Bs {{ (advance) | number:'1.2-2' }}</strong> está en estado <span class="text-amber-700 font-semibold">PENDIENTE DE VALIDACIÓN</span>.
       </p>
 
       <div class="bg-amber-50 rounded-2xl p-5 mt-6 text-left border border-amber-100">
@@ -52,11 +54,11 @@
           </div>
           <div class="flex justify-between">
             <span>Anticipo (25%):</span>
-            <strong class="text-emerald-700 font-bold">Bs {{ advance }}</strong>
+            <strong class="text-emerald-700 font-bold">Bs {{ (advance) | number:'1.2-2' }}</strong>
           </div>
           <div class="flex justify-between">
-            <span>Saldo pendiente (75%):</span>
-            <strong class="text-slate-900">Bs {{ balance }}</strong>
+            <span>Saldo pendiente:</span>
+            <strong class="text-slate-900">Bs {{ (balance) | number:'1.2-2' }}</strong>
           </div>
         </div>
       </div>
@@ -78,7 +80,7 @@
   }
 
   <!-- FORMULARIO DE PAGO ACTIVO -->
-  @if(!submitted && !isExpired) {
+  @if(ready && !submitted && !isExpired) {
     <div>
       <!-- TEMPORIZADOR DE 5 MINUTOS -->
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm">
@@ -90,10 +92,14 @@
           </div>
         </div>
         <span class="text-xs bg-amber-200/80 text-amber-900 px-2.5 py-1 rounded-full font-semibold">
-          5 min para pagar
+          Plazo para enviar comprobante
         </span>
       </div>
 
+      <p role="status" class="mb-4 p-3 rounded-xl bg-amber-50 text-amber-900">
+        Tu reserva se cancelará automáticamente al vencer el tiempo si no envías el comprobante del anticipo.
+      </p>
+      @if(secondsRemaining <= 60) { <p role="alert" class="mb-4 font-bold text-rose-700">¡Queda menos de un minuto! Envía tu comprobante para conservar la reserva.</p> }
       <h1 class="text-2xl font-bold text-slate-900">Pagar anticipo</h1>
       <p class="text-slate-500 text-sm mb-6">
         Registra tu pago del 25% para asegurar tu turno
@@ -101,8 +107,8 @@
 
       <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-5 text-white mb-6 shadow-sm">
         <div class="text-xs text-emerald-100 uppercase tracking-wide font-medium">Anticipo requerido (25%)</div>
-        <div class="text-3xl font-extrabold mt-1">Bs {{ advance }}</div>
-        <div class="text-xs text-emerald-200 mt-2">Saldo pendiente al llegar: Bs {{ balance }}</div>
+        <div class="text-3xl font-extrabold mt-1">Bs {{ (advance) | number:'1.2-2' }}</div>
+        <div class="text-xs text-emerald-200 mt-2">Saldo pendiente al llegar: Bs {{ (balance) | number:'1.2-2' }}</div>
       </div>
 
       @if(errorMessage) {
@@ -112,7 +118,7 @@
       }
 
       <label class="text-sm font-semibold text-slate-800 block mb-2">Método de pago</label>
-      <div class="grid grid-cols-3 gap-2 mb-6">
+      <div class="grid grid-cols-1 gap-2 mb-6">
         <button
           *ngFor="let m of methods"
           type="button"
@@ -126,7 +132,7 @@
       </div>
 
       <!-- PAGO QR -->
-      @if(paymentMethod === 'QR') {
+      @if(paymentMethod === 'QR' && qrImageUrl) {
         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-center mb-6">
           <p class="text-xs text-slate-500 mb-3">Escanea el código QR oficial del complejo:</p>
           <img
@@ -140,14 +146,7 @@
         </div>
       }
 
-      <!-- PAGO TRANSFERENCIA -->
-      @if(paymentMethod === 'transfer') {
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 text-sm space-y-1 text-slate-700">
-          <p class="font-bold text-slate-900">Banco Unión S.A.</p>
-          <p class="text-xs text-slate-500">Cuenta Corriente: 10000029384729</p>
-          <p class="text-xs text-slate-500">Titular: {{ establishment.name }}</p>
-        </div>
-      }
+      @if(!qrImageUrl) { <p class="text-amber-900 mb-4">El complejo no tiene un QR disponible. Contacta al complejo para confirmar cómo pagar antes de transferir.</p> }
 
       <!-- DATOS DE COMPROBANTE -->
       <div class="space-y-4 mb-6">
@@ -155,27 +154,19 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">Monto pagado (Bs)</label>
           <input
             type="number"
-            [(ngModel)]="amount"
+            [(ngModel)]="amount" readonly
             placeholder="Monto pagado"
             class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-emerald-500"
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Número de referencia / Transacción</label>
-          <input
-            type="text"
-            [(ngModel)]="reference"
-            placeholder="Ej. REF-892714"
-            class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-emerald-500"
-          />
-        </div>
+
 
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Adjuntar captura del comprobante</label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             (change)="selectFile($event)"
             class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
           />
@@ -194,11 +185,11 @@
 
       <button
         (click)="submitPayment()"
-        [disabled]="loading"
+        [disabled]="loading || !fileDataUrl"
         class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
       >
         <span *ngIf="!loading">Enviar comprobante a validación</span>
-        <span *ngIf="loading">Registrando comprobante en backend...</span>
+        <span *ngIf="loading">Enviando comprobante...</span>
       </button>
     </div>
   }

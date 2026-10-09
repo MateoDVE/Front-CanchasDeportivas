@@ -1,23 +1,26 @@
 <div class="max-w-md mx-auto px-4 py-12">
+  @if(errorMessage) { <p role="alert" class="text-rose-700 mb-4">{{ errorMessage }}</p> }
+  @if(!loaded && !errorMessage) { <p role="status">Consultando reserva…</p> }
+  @if(loaded) {
   <div class="text-center mb-8">
-    <div class="w-20 h-20 bg-emerald-100 rounded-full mx-auto flex items-center justify-center text-4xl mb-4">
-      ✓
+    <div class="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl mb-4" [ngClass]="confirmed ? 'bg-emerald-100' : 'bg-amber-100'">
+      {{ confirmed ? '✓' : '⏳' }}
     </div>
     <h1 class="text-2xl font-bold text-slate-900">
-      ¡Reserva realizada con éxito!
+      {{ title }}
     </h1>
     <p class="text-slate-500 text-sm mt-1">
-      Tu comprobante de anticipo está en proceso de validación.
+      {{ status === 'PENDING_VALIDATION' ? 'Tu comprobante está en revisión. La reserva se confirmará cuando sea aprobado.' : 'Consulta el estado y el saldo actualizado de tu reserva.' }}
     </p>
   </div>
 
   <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-    <div class="bg-emerald-600 text-white p-5">
-      <p class="text-xs text-emerald-100 uppercase tracking-wider font-semibold">
+    <div class="p-5" [ngClass]="confirmed ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-950'">
+      <p class="text-xs uppercase tracking-wider font-semibold">
         Código de Reserva
       </p>
       <h2 class="text-base sm:text-lg font-mono font-bold mt-1 break-all">
-        {{ reservationId }}
+        {{ reservationId.slice(0, 8).toUpperCase() }}
       </h2>
     </div>
 
@@ -58,18 +61,19 @@
         </div>
 
         <div class="flex justify-between text-emerald-600">
-          <span>Anticipo pagado (25%):</span>
+          <span>Anticipo requerido (25%):</span>
           <strong>Bs {{ advance }}</strong>
         </div>
 
         <div class="border-t border-slate-200 pt-2 flex justify-between">
-          <span class="text-slate-600 font-medium">Saldo pendiente (75%):</span>
+          <span class="text-slate-600 font-medium">Saldo pendiente:</span>
           <strong class="text-slate-900">Bs {{ balance }}</strong>
         </div>
       </div>
     </div>
   </div>
 
+  }
   <button
     (click)="goReservations()"
     class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
