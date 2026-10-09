@@ -37,32 +37,23 @@
 
       <form (ngSubmit)="handleSubmit()" class="space-y-4">
         <div>
-          <label class="text-sm block mb-1 text-slate-700">Nombre completo</label>
+          <label class="text-sm block mb-1 text-slate-700">Nombres</label>
           <input
-            [(ngModel)]="form.name"
-            name="name"
+            [(ngModel)]="form.firstName"
+            name="firstName"
             type="text"
-            placeholder="Juan Pérez"
+            placeholder="Juan Carlos"
             required
-            maxlength="50"
+            maxlength="80"
             class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
           />
         </div>
 
+        <div>
+          <label for="lastName" class="text-sm block mb-1 text-slate-700">Apellidos</label>
+          <input id="lastName" [(ngModel)]="form.lastName" name="lastName" type="text" required maxlength="80" autocomplete="family-name" placeholder="Pérez López" class="w-full border border-slate-300 rounded-xl px-4 py-3" />
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm block mb-1 text-slate-700">Cédula de Identidad (CI)</label>
-            <input
-              [(ngModel)]="form.ci"
-              name="ci"
-              type="number"
-              placeholder="1234567"
-              required
-              min="1000000" max="99999999" title="Debe ser entre 1000000 y 99999999"
-              oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)"
-              class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-emerald-500"
-            />
-          </div>
           <div>
             <label class="text-sm block mb-1 text-slate-700">Teléfono / Celular</label>
             <input
@@ -102,7 +93,7 @@
               [type]="showPassword ? 'text' : 'password'"
               [(ngModel)]="form.password"
               name="password"
-              placeholder="•••••••• (mín. 6 caracteres)"
+              placeholder="•••••••• (mín. 8 caracteres)"
               required
               maxlength="40"
               class="w-full border border-slate-300 rounded-xl px-4 py-3 pr-12 focus:outline-emerald-500"

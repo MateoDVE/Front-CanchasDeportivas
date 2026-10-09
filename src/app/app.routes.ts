@@ -24,7 +24,10 @@ from './pages/admin/admin-dashboard';
 
 import { roleGuard } from './services/role.guard';
 
+import { VerifyEmailComponent } from './pages/verify-email/verify-email';
+
 export const routes: Routes = [
+{ path: 'verify-email', component: VerifyEmailComponent },
 
 
 {
@@ -47,37 +50,43 @@ export const routes: Routes = [
 
 {
  path:'courts',
- component:CourtsComponent
+ component:CourtsComponent,
+ canActivate: [roleGuard]
 },
 
 
 {
  path:'court-detail/:id',
- component:CourtDetailComponent
+ component:CourtDetailComponent,
+ canActivate: [roleGuard]
 },
 
 
 {
  path:'booking-flow',
- component:BookingFlowComponent
+ component:BookingFlowComponent,
+ canActivate: [roleGuard]
 },
 
 
 {
  path:'payment',
- component:PaymentComponent
+ component:PaymentComponent,
+ canActivate: [roleGuard]
 },
 
 
 {
  path:'booking-confirmation',
- component:BookingConfirmationComponent
+ component:BookingConfirmationComponent,
+ canActivate: [roleGuard]
 },
 
 
 {
  path:'my-reservations',
- component:MyReservationsComponent
+ component:MyReservationsComponent,
+ canActivate: [roleGuard]
 },
 
 {

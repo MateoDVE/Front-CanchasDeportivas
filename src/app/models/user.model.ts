@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  ci: string;
+  ci?: string;
   role: 'CLIENTE' | 'SECRETARIA' | 'ADMIN' | string;
   status: string;
   createdAt: string | Date;
@@ -20,9 +20,9 @@ export interface LoginDto {
 }
 
 export interface RegisterDto {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
-  ci: string;
   password: string;
 }

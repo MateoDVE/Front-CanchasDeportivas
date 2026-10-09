@@ -55,6 +55,13 @@ export class AuthService {
     return this.http.post<User>(`${this.apiUrl}/register`, dto);
   }
 
+  verifyEmail(email: string, token: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(this.apiUrl + '/verify-email', { email, token });
+  }
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(this.apiUrl + '/resend-verification', { email });
+  }
+
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`).pipe(
       tap((user) => {

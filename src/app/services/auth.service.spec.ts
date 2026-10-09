@@ -91,7 +91,7 @@ describe('AuthService', () => {
 
   it('should register user', () => {
     const dto = {
-      name: 'Juan Perez',
+      firstName: 'Juan', lastName: 'Perez',
       email: 'juan@test.com',
       phone: '70000000',
       ci: '123456',

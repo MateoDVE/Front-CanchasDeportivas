@@ -16,9 +16,9 @@ export class RegisterComponent {
   private authService = inject(AuthService);
 
   form = {
-    name: '',
+    firstName: '',
+    lastName: '',
     phone: '',
-    ci: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -34,13 +34,13 @@ export class RegisterComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.form.name || !this.form.email || !this.form.phone || !this.form.ci || !this.form.password) {
+    if (!this.form.firstName.trim() || !this.form.lastName.trim() || !this.form.email || !this.form.phone || !this.form.password) {
       this.errorMessage = 'Todos los campos obligatorios deben completarse.';
       return;
     }
 
-    if (this.form.password.length < 6) {
-      this.errorMessage = 'La contraseña debe tener al menos 6 caracteres.';
+    if (this.form.password.length < 8) {
+      this.errorMessage = 'La contraseña debe tener al menos 8 caracteres.';
       return;
     }
 
@@ -53,30 +53,16 @@ export class RegisterComponent {
 
     this.authService
       .register({
-        name: this.form.name,
+        firstName: this.form.firstName.trim(),
+        lastName: this.form.lastName.trim(),
         email: this.form.email,
         phone: this.form.phone,
-        ci: this.form.ci,
         password: this.form.password,
       })
       .subscribe({
         next: () => {
-          // Loguear automáticamente tras el registro exitoso
-          this.authService
-            .login({
-              email: this.form.email,
-              password: this.form.password,
-            })
-            .subscribe({
-              next: () => {
-                this.loading = false;
-                this.router.navigate(['/courts']);
-              },
-              error: () => {
-                this.loading = false;
-                this.router.navigate(['/login']);
-              },
-            });
+          this.loading = false;
+          this.router.navigate(['/verify-email'], { state: { email: this.form.email } });
         },
         error: (err) => {
           this.loading = false;
