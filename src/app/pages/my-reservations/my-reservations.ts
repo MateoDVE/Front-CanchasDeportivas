@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReservationService } from '../../services/reservation.service';
@@ -8,7 +9,7 @@ import { ClientReservationItem } from '../../models/reservation.model';
 @Component({
   selector: 'app-my-reservations',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './my-reservations.html',
   styleUrls: ['./my-reservations.scss'],
 })
@@ -18,6 +19,17 @@ export class MyReservationsComponent implements OnInit {
   readonly authService = inject(AuthService);
 
   activeFilter = 'all';
+  sortOrder = 'upcoming';
+  search = '';
+  dateFrom = '';
+  dateTo = '';
+  errorMessage = '';
+  get invalidDates(): boolean { return !!this.dateFrom && !!this.dateTo && this.dateFrom > this.dateTo; }
+  openReservation(r: ClientReservationItem): void {
+    this.reservationService.navigateToReservation(r.status === 'TEMPORAL' && r.secondsRemaining > 0 ? '/payment' : '/booking-confirmation', r.id).subscribe({
+      error: () => { this.errorMessage = 'No se pudo abrir la reserva. Actualiza la lista e intenta de nuevo.'; },
+    });
+  }
   loading = true;
   selectedReservation: ClientReservationItem | null = null;
   showCancelModal = false;
@@ -37,6 +49,7 @@ export class MyReservationsComponent implements OnInit {
     { key: 'all', label: 'Todas' },
     { key: 'confirmed', label: 'Confirmadas' },
     { key: 'pending', label: 'En validación' },
+    { key: 'temporal', label: 'Pendientes de pago' },
     { key: 'finished', label: 'Finalizadas' },
     { key: 'cancelled', label: 'Canceladas / Expiradas' },
   ];
@@ -53,13 +66,14 @@ export class MyReservationsComponent implements OnInit {
 
   loadReservations(): void {
     this.loading = true;
+    this.errorMessage = '';
     this.reservationService.getMyReservations().subscribe({
       next: (grouped) => {
         this.reservations = [...grouped.upcoming, ...grouped.history];
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error al cargar reservas:', err);
+        this.errorMessage = 'No se pudieron cargar tus reservas. Intenta nuevamente.';
         this.loading = false;
       },
     });
@@ -82,16 +96,31 @@ export class MyReservationsComponent implements OnInit {
   }
 
   get visibleReservations(): ClientReservationItem[] {
+    if (this.invalidDates) return [];
     return this.reservations.filter((r) => {
+      const text = this.search.trim().toLocaleLowerCase('es');
+      if (text && !(r.courtName + ' ' + this.formatCode(r.id)).toLocaleLowerCase('es').includes(text)) return false;
+      if (this.dateFrom && r.reservationDate < this.dateFrom || this.dateTo && r.reservationDate > this.dateTo) return false;
       if (this.activeFilter === 'all') return true;
       if (this.activeFilter === 'confirmed') return r.status === 'CONFIRMED';
       if (this.activeFilter === 'pending')
-        return r.status === 'PENDING_VALIDATION' || r.status === 'TEMPORAL';
+        return r.status === 'PENDING_VALIDATION';
+      if (this.activeFilter === 'temporal') return r.status === 'TEMPORAL';
       if (this.activeFilter === 'finished')
-        return r.status === 'COMPLETED' || r.status === 'FINISHED';
+        return ['COMPLETED', 'FINISHED', 'NO_SHOW', 'REPROGRAMMED'].includes(r.status);
       if (this.activeFilter === 'cancelled')
         return r.status === 'CANCELLED' || r.status === 'EXPIRED';
       return true;
+    }).sort((a, b) => {
+      const dateA = a.reservationDate + 'T' + a.startTime;
+      const dateB = b.reservationDate + 'T' + b.startTime;
+      if (this.sortOrder === 'recent') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() || a.id.localeCompare(b.id);
+      if (this.sortOrder === 'price') return b.totalPrice - a.totalPrice || dateA.localeCompare(dateB);
+      if (this.sortOrder === 'date-desc') return dateB.localeCompare(dateA) || a.id.localeCompare(b.id);
+      const active = (r: ClientReservationItem) => ['TEMPORAL', 'PENDING_VALIDATION', 'CONFIRMED'].includes(r.status) && new Date(r.reservationDate + 'T' + r.endTime + '-04:00').getTime() > Date.now();
+      const aActive = active(a), bActive = active(b);
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return (aActive ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA)) || a.id.localeCompare(b.id);
     });
   }
 

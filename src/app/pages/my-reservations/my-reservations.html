@@ -17,7 +17,7 @@
     </div>
     <div class="user-info">
       <h3>{{ user()?.name || 'Cliente' }}</h3>
-      <p>{{ user()?.email || 'Sin correo' }} · Cel: {{ user()?.phone || 'Sin teléfono' }} · CI: {{ user()?.ci || 'Sin CI' }}</p>
+      <p>{{ user()?.email || 'Sin correo' }} · Cel: {{ user()?.phone || 'Sin teléfono' }}</p>
     </div>
     <div class="stats">
       <div>
@@ -46,6 +46,21 @@
     </button>
   </div>
 
+  <div class="flex flex-wrap gap-3 my-4">
+    <label>Buscar cancha o código <input class="border rounded p-2" [(ngModel)]="search" maxlength="80" /></label>
+    <label>Desde <input class="border rounded p-2" type="date" [(ngModel)]="dateFrom" /></label>
+    <label>Hasta <input class="border rounded p-2" type="date" [(ngModel)]="dateTo" /></label>
+    <label>Ordenar por
+      <select class="border rounded p-2" [(ngModel)]="sortOrder">
+        <option value="upcoming">Próximas primero</option>
+        <option value="date-desc">Fecha más lejana primero</option>
+        <option value="recent">Creación más reciente</option>
+        <option value="price">Mayor importe</option>
+      </select>
+    </label>
+  </div>
+  @if(invalidDates) { <p role="alert" class="text-rose-700">La fecha desde no puede ser posterior a la fecha hasta.</p> }
+  @if(errorMessage) { <p role="alert" class="text-rose-700">{{ errorMessage }}</p><button (click)="loadReservations()">Reintentar</button> }
   <!-- ESTADO DE CARGA -->
   @if(loading) {
     <div class="text-center py-16 text-slate-400">
@@ -63,6 +78,7 @@
           <div class="top">
             <div>
               <h3>{{ r.courtName }}</h3>
+              <button (click)="openReservation(r)" class="underline text-emerald-700">{{ r.status === 'TEMPORAL' && r.secondsRemaining > 0 ? 'Pagar anticipo' : 'Ver detalles' }}</button>
               <p class="text-xs text-slate-400" [title]="'ID completo: ' + r.id">
                 ID Reserva: <strong class="font-mono text-slate-600">#{{ formatCode(r.id) }}</strong>
               </p>
@@ -86,15 +102,15 @@
             </div>
             <div>
               <label>Precio total</label>
-              <strong>Bs {{ r.totalPrice }}</strong>
+              <strong>Bs {{ (r.totalPrice) | number:'1.2-2' }}</strong>
             </div>
             <div>
               <label>Anticipo (25%)</label>
-              <strong class="text-emerald-600">Bs {{ r.advanceRequired }}</strong>
+              <strong class="text-emerald-600">Bs {{ (r.advanceRequired) | number:'1.2-2' }}</strong>
             </div>
             <div>
               <label>Saldo pendiente</label>
-              <strong class="text-slate-800">Bs {{ r.pendingBalance }}</strong>
+              <strong class="text-slate-800">Bs {{ (r.pendingBalance) | number:'1.2-2' }}</strong>
             </div>
           </div>
 
