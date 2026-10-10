@@ -315,24 +315,35 @@ var assemblies = [
   {
     "name": "app.pages.admin",
     "classes": [
-      { "name": "admin-dashboard.ts", "rp": "app.pages.admin_ts.html", "cl": 57, "ucl": 254, "cal": 311, "tl": 563, "cb": 5, "tb": 100, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "admin-dashboard.ts", "rp": "app.pages.admin_ts.html", "cl": 314, "ucl": 5, "cal": 319, "tl": 566, "cb": 95, "tb": 112, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+    ]},
+  {
+    "name": "app.pages.my-reservations",
+    "classes": [
+      { "name": "my-reservations.ts", "rp": "app.pages.my_reservations_ts.html", "cl": 100, "ucl": 0, "cal": 100, "tl": 176, "cb": 55, "tb": 58, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+    ]},
+  {
+    "name": "app.pages.payment",
+    "classes": [
+      { "name": "payment.ts", "rp": "app.pages.payment_ts.html", "cl": 50, "ucl": 17, "cal": 67, "tl": 93, "cb": 14, "tb": 29, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "app.pages.secretary",
     "classes": [
-      { "name": "secretary-dashboard.ts", "rp": "app.pages.secretary_ts.html", "cl": 47, "ucl": 308, "cal": 355, "tl": 627, "cb": 5, "tb": 91, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "secretary-dashboard.ts", "rp": "app.pages.secretary_ts.html", "cl": 367, "ucl": 6, "cal": 373, "tl": 650, "cb": 71, "tb": 91, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "app.services",
     "classes": [
-      { "name": "admin.service.ts", "rp": "app.services_ts.html", "cl": 41, "ucl": 40, "cal": 81, "tl": 282, "cb": 11, "tb": 16, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "auth.service.ts", "rp": "app.services_ts.2.html", "cl": 41, "ucl": 4, "cal": 45, "tl": 90, "cb": 4, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "admin.service.ts", "rp": "app.services_ts.html", "cl": 41, "ucl": 44, "cal": 85, "tl": 272, "cb": 11, "tb": 16, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "auth.service.ts", "rp": "app.services_ts.2.html", "cl": 41, "ucl": 8, "cal": 49, "tl": 97, "cb": 4, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "complex.service.ts", "rp": "app.services_ts.3.html", "cl": 7, "ucl": 0, "cal": 7, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "confirmation.service.ts", "rp": "app.services_ts.4.html", "cl": 13, "ucl": 0, "cal": 13, "tl": 31, "cb": 1, "tb": 1, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "court.service.ts", "rp": "app.services_ts.5.html", "cl": 16, "ucl": 0, "cal": 16, "tl": 42, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "payment.service.ts", "rp": "app.services_ts.6.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 20, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "reservation.service.ts", "rp": "app.services_ts.7.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 36, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "secretary.service.ts", "rp": "app.services_ts.8.html", "cl": 42, "ucl": 20, "cal": 62, "tl": 250, "cb": 6, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "reservation.service.ts", "rp": "app.services_ts.7.html", "cl": 12, "ucl": 7, "cal": 19, "tl": 52, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "role.guard.ts", "rp": "app.services_ts.8.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 17, "cb": 7, "tb": 9, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "secretary.service.ts", "rp": "app.services_ts.9.html", "cl": 42, "ucl": 20, "cal": 62, "tl": 248, "cb": 6, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "environments",
