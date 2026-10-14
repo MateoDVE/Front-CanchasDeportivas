@@ -335,7 +335,7 @@ var assemblies = [
   {
     "name": "app.services",
     "classes": [
-      { "name": "admin.service.ts", "rp": "app.services_ts.html", "cl": 41, "ucl": 44, "cal": 85, "tl": 272, "cb": 11, "tb": 16, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "admin.service.ts", "rp": "app.services_ts.html", "cl": 85, "ucl": 0, "cal": 85, "tl": 272, "cb": 16, "tb": 16, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "auth.service.ts", "rp": "app.services_ts.2.html", "cl": 41, "ucl": 8, "cal": 49, "tl": 97, "cb": 4, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "complex.service.ts", "rp": "app.services_ts.3.html", "cl": 7, "ucl": 0, "cal": 7, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "confirmation.service.ts", "rp": "app.services_ts.4.html", "cl": 13, "ucl": 0, "cal": 13, "tl": 31, "cb": 1, "tb": 1, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
