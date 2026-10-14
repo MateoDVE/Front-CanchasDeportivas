@@ -43,3 +43,30 @@ input:focus{
 outline:none;
 
 }
+.time-range {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 12px;
+}
+.time-point {
+  min-height: 64px;
+  padding: 10px 2px;
+  border-block: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.time-point:hover { transform: none; background: #ecfdf5; }
+.time-point:focus-visible { outline: 3px solid #047857; outline-offset: 2px; z-index: 1; }
+.time-point:disabled { color: #94a3b8; background: #f1f5f9; }
+.time-point.in-range { background: #a7f3d0; color: #064e3b; border-color: #a7f3d0; }
+.time-point.range-start, .time-point.range-end { background: #059669; color: white; border-color: #059669; }
+.time-point.range-start { border-radius: 10px 0 0 10px; }
+.time-point.range-end { border-radius: 0 10px 10px 0; }
+.time-caption { font-size: 10px; margin-top: 4px; }
+@media (min-width: 640px) {
+  .time-range { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}

@@ -33,12 +33,20 @@ export class CourtDetailComponent implements OnInit {
   selectedDate = this.formatDate(this.today);
   selectedStart: string | null = null;
 
-  duration = 1;
+  selectedEnd: string | null = null;
+
+  get duration(): number {
+    return this.selectedStart && this.selectedEnd
+      ? (this.timeToMinutes(this.selectedEnd) - this.timeToMinutes(this.selectedStart)) / 60
+      : 0;
+  }
   imgIndex = 0;
 
   loading = true;
   bookingLoading = false;
   bookingError = '';
+  availabilityLoading = false;
+  availabilityError = '';
 
   months = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -90,21 +98,26 @@ export class CourtDetailComponent implements OnInit {
   }
 
   loadAvailability(courtId: number, date: string): void {
+    this.availabilityLoading = true;
+    this.availabilityError = '';
     this.serverAvailability = null;
     this.timeSlots = [];
     this.selectedStart = null;
+    this.selectedEnd = null;
     this.courtService.getCourtAvailability(courtId, date).subscribe({
       next: (avail) => {
         if (date !== this.selectedDate) return;
+        this.availabilityLoading = false;
         this.serverAvailability = avail;
         if (avail && Array.isArray(avail.slots) && avail.slots.length > 0) {
-          this.timeSlots = avail.slots
-            .filter((s) => s && s.startTime)
-            .map((s) => s.startTime);
+          this.timeSlots = [...new Set(avail.slots.flatMap(s => [s.startTime, s.endTime]))]
+            .filter(Boolean).sort();
         }
       },
-      error: (err) => {
-        console.error('Error al cargar disponibilidad:', err);
+      error: () => {
+        if (date !== this.selectedDate) return;
+        this.availabilityLoading = false;
+        this.availabilityError = 'No se pudieron cargar los horarios. Intenta nuevamente.';
       },
     });
   }
@@ -217,39 +230,59 @@ export class CourtDetailComponent implements OnInit {
     return (hours || 0) * 60 + (minutes || 0);
   }
 
-  canBookSlot(start: string): boolean {
-    if (!this.availability[start] || this.availability[start] !== 'available') {
-      return false;
+  isRangeAvailable(start: string, end: string): boolean {
+    const first = this.timeToMinutes(start);
+    const last = this.timeToMinutes(end);
+    if (!this.serverAvailability?.isOpen || last <= first || last - first > 180) return false;
+    if ((last - first) % 30 !== 0) return false;
+    // Require complete coverage, including gaps in the server response.
+    let cursor = first;
+    const slots = [...this.serverAvailability.slots].sort((a, b) =>
+      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
+    for (const slot of slots) {
+      const from = this.timeToMinutes(slot.startTime);
+      const to = this.timeToMinutes(slot.endTime);
+      if (to <= cursor) continue;
+      if (from > cursor || slot.status !== 'AVAILABLE' || !slot.isAvailable) return false;
+      cursor = to;
+      if (cursor >= last) return true;
     }
-
-    const startMinutes = this.timeToMinutes(start);
-    const endMinutes = startMinutes + this.duration * 60;
-    const closingMinutes = this.timeToMinutes(this.serverAvailability?.closeTime || '00:00');
-
-    if (endMinutes > closingMinutes) {
-      return false;
-    }
-
-    const slotsToCheck = this.timeSlots.filter((slot) => {
-      const slotMinutes = this.timeToMinutes(slot);
-      return slotMinutes >= startMinutes && slotMinutes < endMinutes;
-    });
-
-    return slotsToCheck.every((slot) => this.availability[slot] === 'available');
+    return false;
   }
 
-  setDuration(value: number): void {
-    if (!Number.isInteger(value * 2) || value < 0.5 || value > 3) return;
-    this.duration = value;
+  canStartAt(time: string): boolean {
+    return this.isRangeAvailable(time, this.getEndTime(time, 0.5));
+  }
+
+  canSelectTime(time: string): boolean {
+    if (this.bookingLoading) return false;
+    if (this.selectedStart && !this.selectedEnd) {
+      if (time === this.selectedStart) return true;
+      if (time > this.selectedStart) return this.isRangeAvailable(this.selectedStart, time);
+    }
+    return this.canStartAt(time);
+  }
+
+  isInRange(time: string): boolean {
+    return !!this.selectedStart && !!this.selectedEnd &&
+      time > this.selectedStart && time < this.selectedEnd;
+  }
+
+  clearTimeRange(): void {
     this.selectedStart = null;
+    this.selectedEnd = null;
   }
 
   selectTime(time: string): void {
-    if (!this.canBookSlot(time)) {
-      return;
+    if (!this.canSelectTime(time)) return;
+    if (time === this.selectedStart && !this.selectedEnd) {
+      this.clearTimeRange();
+    } else if (this.selectedStart && !this.selectedEnd && time > this.selectedStart) {
+      this.selectedEnd = time;
+    } else {
+      this.selectedStart = time;
+      this.selectedEnd = null;
     }
-
-    this.selectedStart = this.selectedStart === time ? null : time;
   }
 
   selectImage(index: number): void {
@@ -270,23 +303,26 @@ export class CourtDetailComponent implements OnInit {
     });
   }
 
-  getSlotStatusText(slot: string): string {
-    if (this.serverAvailability?.slots.find(s => s.startTime === slot)?.status === 'BLOCKED') return 'Mantenimiento';
-    const status = this.availability[slot];
-    if (status === 'occupied') return 'Ocupado';
-    if (status === 'blocked') return 'En reserva';
-    if (!this.canBookSlot(slot)) return 'No disp.';
-
-    return this.getEndTime(slot, this.duration);
+  getSlotStatusText(time: string): string {
+    if (time === this.selectedStart) return 'Inicio';
+    if (time === this.selectedEnd) return 'Fin';
+    if (this.selectedStart && !this.selectedEnd && this.isRangeAvailable(this.selectedStart, time)) return 'Elegir fin';
+    if (this.isInRange(time)) return 'Seleccionado';
+    const slot = this.serverAvailability?.slots.find(s => s.startTime === time);
+    if (!slot) return 'Cierre';
+    if (slot.status === 'BLOCKED') return 'Mantenimiento';
+    if (slot.status === 'OCCUPIED') return 'Ocupado';
+    if (slot.status === 'TEMPORAL_HOLD') return 'En reserva';
+    return this.canSelectTime(time) ? 'Disponible' : 'No disponible';
   }
 
   continueBooking(): void {
-    if (!this.selectedStart || !this.court) {
+    if (this.bookingLoading || !this.selectedStart || !this.selectedEnd || !this.court) {
       return;
     }
 
-    if (!this.canBookSlot(this.selectedStart)) {
-      this.selectedStart = null;
+    if (!this.isRangeAvailable(this.selectedStart, this.selectedEnd)) {
+      this.clearTimeRange();
       return;
     }
 
@@ -300,7 +336,7 @@ export class CourtDetailComponent implements OnInit {
     this.bookingLoading = true;
     this.bookingError = '';
 
-    const endTime = this.getEndTime(this.selectedStart, this.duration);
+    const endTime = this.selectedEnd;
 
     this.reservationService
       .createTemporal({
