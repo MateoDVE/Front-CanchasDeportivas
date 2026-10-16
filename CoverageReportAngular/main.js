@@ -318,6 +318,11 @@ var assemblies = [
       { "name": "admin-dashboard.ts", "rp": "app.pages.admin_ts.html", "cl": 314, "ucl": 5, "cal": 319, "tl": 566, "cb": 95, "tb": 112, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
+    "name": "app.pages.court-detail",
+    "classes": [
+      { "name": "court-detail.ts", "rp": "app.pages.court_detail_ts.html", "cl": 207, "ucl": 4, "cal": 211, "tl": 368, "cb": 89, "tb": 102, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+    ]},
+  {
     "name": "app.pages.my-reservations",
     "classes": [
       { "name": "my-reservations.ts", "rp": "app.pages.my_reservations_ts.html", "cl": 100, "ucl": 0, "cal": 100, "tl": 176, "cb": 55, "tb": 58, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
