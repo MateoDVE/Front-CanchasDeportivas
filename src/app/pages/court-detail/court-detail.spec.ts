@@ -176,17 +176,9 @@ describe('CourtDetailComponent', () => {
     );
   });
 
-  // ======================================================
-  // CREACIÓN
-  // ======================================================
-
   it('should be created', () => {
     expect(component).toBeTruthy();
   });
-
-  // ======================================================
-  // ngOnInit
-  // ======================================================
 
   it('should load court on init with valid id', () => {
     spyOn(component, 'loadCourt');
@@ -249,10 +241,6 @@ describe('CourtDetailComponent', () => {
       .toContain('cancha');
   });
 
-  // ======================================================
-  // CARGAR CANCHA
-  // ======================================================
-
   it('should load court successfully', () => {
     spyOn(component, 'loadEstablishment');
     spyOn(component, 'loadAvailability');
@@ -285,10 +273,6 @@ describe('CourtDetailComponent', () => {
     expect(component.bookingError)
       .toContain('No se pudo cargar');
   });
-
-  // ======================================================
-  // COMPLEJO
-  // ======================================================
 
   it('should load establishment', () => {
     component.loadEstablishment(10);
@@ -333,10 +317,6 @@ describe('CourtDetailComponent', () => {
     expect(component.bookingError)
       .toContain('No se pudo cargar el complejo');
   });
-
-  // ======================================================
-  // DISPONIBILIDAD
-  // ======================================================
 
   it('should load availability and generate time slots', () => {
     component.selectedDate = '2026-10-20';
@@ -411,10 +391,6 @@ describe('CourtDetailComponent', () => {
       .toContain('No se pudieron cargar');
   });
 
-  // ======================================================
-  // MAPA DE DISPONIBILIDAD
-  // ======================================================
-
   it('should map available, occupied and blocked slots', () => {
     component.serverAvailability = availability;
 
@@ -439,10 +415,6 @@ describe('CourtDetailComponent', () => {
     expect(component.availability)
       .toEqual({});
   });
-
-  // ======================================================
-  // PRECIO
-  // ======================================================
 
   it('should calculate duration', () => {
     component.selectedStart = '10:00';
@@ -486,10 +458,6 @@ describe('CourtDetailComponent', () => {
     expect(component.pendingBalance)
       .toBe(150);
   });
-
-  // ======================================================
-  // CALENDARIO
-  // ======================================================
 
   it('should generate calendar days', () => {
     component.calendarYear = 2026;
@@ -636,10 +604,6 @@ describe('CourtDetailComponent', () => {
       .toBe(2025);
   });
 
-  // ======================================================
-  // TIEMPOS
-  // ======================================================
-
   it('should calculate end time', () => {
     expect(
       component.getEndTime(
@@ -666,10 +630,6 @@ describe('CourtDetailComponent', () => {
       component.timeToMinutes('')
     ).toBe(0);
   });
-
-  // ======================================================
-  // RANGO DISPONIBLE
-  // ======================================================
 
   it('should return true for complete available range', () => {
     component.serverAvailability = availability;
@@ -739,10 +699,6 @@ describe('CourtDetailComponent', () => {
       )
     ).toBeFalse();
   });
-
-  // ======================================================
-  // SELECCIÓN DE HORAS
-  // ======================================================
 
   it('should allow starting on available slot', () => {
     component.serverAvailability = availability;
@@ -833,20 +789,12 @@ describe('CourtDetailComponent', () => {
       .toBeNull();
   });
 
-  // ======================================================
-  // IMAGEN
-  // ======================================================
-
   it('should select image', () => {
     component.selectImage(2);
 
     expect(component.imgIndex)
       .toBe(2);
   });
-
-  // ======================================================
-  // TEXTO DE SLOT
-  // ======================================================
 
   it('should return Inicio for selected start', () => {
     component.selectedStart = '10:00';
@@ -897,10 +845,6 @@ describe('CourtDetailComponent', () => {
     ).toBe('Cierre');
   });
 
-  // ======================================================
-  // NAVEGACIÓN
-  // ======================================================
-
   it('should go back to courts', () => {
     component.goBack();
 
@@ -909,10 +853,6 @@ describe('CourtDetailComponent', () => {
         ['/courts']
       );
   });
-
-  // ======================================================
-  // RESERVA
-  // ======================================================
 
   it('should not continue booking without selected range', () => {
     component.court = court;
