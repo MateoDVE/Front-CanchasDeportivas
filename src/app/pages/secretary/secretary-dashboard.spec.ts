@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 
 import { SecretaryDashboardComponent } from './secretary-dashboard';
 import { SecretaryService } from '../../services/secretary.service';
@@ -39,6 +39,7 @@ describe('SecretaryDashboardComponent', () => {
           'markNoShow',
           'cancelReservation',
           'rescheduleReservation',
+          'getRescheduleAvailability',
           'getPendingPayments',
           'validatePayment',
           'rejectPayment',
@@ -92,6 +93,12 @@ describe('SecretaryDashboardComponent', () => {
     secretary.cancelReservation
       .and.returnValue(of({}));
 
+    secretary.getRescheduleAvailability.and.returnValue(of({ courtId: 1, courtName: 'Cancha', date: '2030-01-07', dayOfWeek: 1, isOpen: true, openTime: '10:00', closeTime: '12:00', slots: [
+      { startTime: '10:00', endTime: '10:30', isAvailable: true, status: 'AVAILABLE' },
+      { startTime: '10:30', endTime: '11:00', isAvailable: true, status: 'AVAILABLE' },
+      { startTime: '11:00', endTime: '11:30', isAvailable: false, status: 'OCCUPIED' },
+      { startTime: '11:30', endTime: '12:00', isAvailable: true, status: 'AVAILABLE' },
+    ] }));
     secretary.rescheduleReservation
       .and.returnValue(of({}));
 
@@ -532,6 +539,42 @@ describe('SecretaryDashboardComponent', () => {
       .toBeNull();
   });
 
+  it('navega entre meses y actualiza tablero y check-in con la misma fecha', () => {
+    component.searchQuery.set('Ana');
+    component.selectDate('2026-12-31');
+    component.moveDate(1);
+    expect(component.selectedDate()).toBe('2027-01-01');
+    expect(secretary.getOperationalBoard).toHaveBeenCalledWith('2027-01-01');
+    expect(secretary.quickSearch).toHaveBeenCalledWith('Ana', '2027-01-01');
+    component.moveDate(-1);
+    expect(component.selectedDate()).toBe('2026-12-31');
+  });
+
+  it('ignora fechas vacías o inexistentes', () => {
+    component.selectDate('2026-11-13');
+    component.selectDate('');
+    component.selectDate('2026-02-30');
+    expect(component.selectedDate()).toBe('2026-11-13');
+  });
+
+  it('una respuesta atrasada no sobrescribe el día seleccionado', () => {
+    const oldBoard = new Subject<any>();
+    const newBoard = new Subject<any>();
+    const oldSearch = new Subject<any[]>();
+    const newSearch = new Subject<any[]>();
+    secretary.getOperationalBoard.and.returnValues(oldBoard, newBoard);
+    secretary.quickSearch.and.returnValues(oldSearch, newSearch);
+    component.searchQuery.set('Ana');
+    component.selectDate('2026-11-12');
+    component.selectDate('2026-11-14');
+    newBoard.next({ date: '2026-11-14', courts: [] });
+    newSearch.next([{ id: 'future' }]);
+    oldBoard.next({ date: '2026-11-12', courts: [] });
+    oldSearch.next([{ id: 'past' }]);
+    expect(component.boardData()?.date).toBe('2026-11-14');
+    expect(component.searchResults()[0].id).toBe('future');
+  });
+
   // ======================================================
   // CHECK-IN
   // ======================================================
@@ -857,79 +900,117 @@ describe('SecretaryDashboardComponent', () => {
   // REPROGRAMACIÓN
   // ======================================================
 
-  it('abre modal de reprogramación', () => {
-    component.openRescheduleModal({
-      id: 'R1',
-      reservationDate: '2026-10-12',
-      startTime: '18:00',
-      endTime: '19:00',
-    });
-
-    expect(component.rescheduleDate())
-      .toBe('2026-10-12');
-
-    expect(component.rescheduleStartTime())
-      .toBe('18:00');
+  it('muestra Reprogramar para una original confirmada aunque falte el campo opcional', () => {
+    expect(component.canReschedule({ status: 'CONFIRMED' })).toBeTrue();
+    expect(component.canReschedule({ status: 'CONFIRMED', canBeRescheduled: true, parentReservationId: null })).toBeTrue();
   });
 
-  it('abre reprogramación con valores por defecto', () => {
-    component.selectedDate.set('2026-10-15');
-
-    component.openRescheduleModal({
-      id: 'R1',
-    });
-
-    expect(component.rescheduleDate())
-      .toBe('2026-10-15');
-
-    expect(component.rescheduleStartTime())
-      .toBe('19:00');
-
-    expect(component.rescheduleEndTime())
-      .toBe('20:00');
+  it('oculta Reprogramar en la antigua y en la nueva después del único cambio', () => {
+    expect(component.canReschedule({ status: 'REPROGRAMMED', canBeRescheduled: true })).toBeFalse();
+    expect(component.canReschedule({ status: 'CONFIRMED', parentReservationId: 'original' })).toBeFalse();
+    expect(component.canReschedule({ status: 'CONFIRMED', canBeRescheduled: false })).toBeFalse();
   });
 
-  it('reprograma reserva', () => {
-    component.openRescheduleModal({
-      id: 'R1',
-      reservationDate: '2026-10-12',
-      startTime: '18:00',
-      endTime: '19:00',
-    });
-
-    component.submitReschedule();
-
-    expect(secretary.rescheduleReservation)
-      .toHaveBeenCalledWith(
-        'R1',
-        jasmine.objectContaining({
-          newDate: '2026-10-12',
-          newStartTime: '18:00',
-          newEndTime: '19:00',
-        })
-      );
+  it('renderiza el botón únicamente en la reserva original habilitada', () => {
+    const fixture = TestBed.createComponent(SecretaryDashboardComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.boardData.set({ date: '2030-01-07', totalReservations: 3, confirmedCount: 2, pendingValidationCount: 0, completedCount: 0, courts: [{
+      courtId: 1, courtName: 'Cancha', sportType: 'Futsal', pricePerHour: 100,
+      reservations: [
+        { id: 'original', status: 'CONFIRMED', startTime: '10:00', endTime: '11:00' },
+        { id: 'antigua', status: 'REPROGRAMMED', startTime: '12:00', endTime: '13:00' },
+        { id: 'nueva', status: 'CONFIRMED', parentReservationId: 'antigua', startTime: '14:00', endTime: '15:00' },
+      ] as any,
+    }] });
+    fixture.detectChanges();
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    const reprogramar = buttons.filter(button => button.textContent?.trim() === 'Reprogramar');
+    expect(reprogramar.length).toBe(1);
+    const open = spyOn(fixture.componentInstance, 'openRescheduleModal');
+    reprogramar[0].click();
+    expect(open).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'original' }));
+    expect(fixture.nativeElement.textContent.match(/Reprogramación utilizada/g).length).toBe(2);
+    fixture.destroy();
   });
 
-  it('maneja error al reprogramar', () => {
-    secretary.rescheduleReservation.and.returnValue(
-      throwError(() => ({
-        error: {
-          message: 'No se pudo reprogramar',
-        },
-      }))
-    );
+  const reschedulable = { id: 'R1', status: 'CONFIRMED', reservationDate: '2030-01-07', startTime: '18:00', endTime: '19:00' };
 
-    component.openRescheduleModal({
-      id: 'R1',
-      reservationDate: '2026-10-15',
-      startTime: '10:00',
-      endTime: '11:00',
-    });
+  it('consulta disponibilidad y exige seleccionar horas nuevas', () => {
+    component.openRescheduleModal(reschedulable);
+    expect(secretary.getRescheduleAvailability).toHaveBeenCalledWith('R1', '2030-01-07');
+    expect(component.rescheduleStartTime()).toBe('');
+    expect(component.rescheduleStarts()).toEqual(['10:00', '10:30', '11:30']);
+    component.changeRescheduleStart('10:00');
+    expect(component.rescheduleEnds()).toEqual(['10:30', '11:00']);
+  });
 
-    component.submitReschedule();
+  it('bloquea una segunda reprogramación y explica el motivo en modal', () => {
+    component.openRescheduleModal({ ...reschedulable, parentReservationId: 'original' });
+    expect(component.activeReservationAction()).toBeNull();
+    expect(confirmation.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ acknowledgeOnly: true, message: jasmine.stringMatching('Solo se permite una') }));
+    expect(secretary.getRescheduleAvailability).not.toHaveBeenCalled();
+  });
 
-    expect(component.errorMsg())
-      .toBe('No se pudo reprogramar');
+  it('muestra un modal si faltan horas sin enviar la reserva', async () => {
+    component.openRescheduleModal(reschedulable);
+    await component.submitReschedule();
+    expect(secretary.rescheduleReservation).not.toHaveBeenCalled();
+    expect(confirmation.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ title: 'Selecciona un horario válido' }));
+  });
+
+  it('confirma y comunica el éxito con fecha y horas', async () => {
+    component.openRescheduleModal(reschedulable);
+    component.changeRescheduleStart('10:00');
+    component.rescheduleEndTime.set('11:00');
+    await component.submitReschedule();
+    expect(secretary.rescheduleReservation).toHaveBeenCalledWith('R1', jasmine.objectContaining({ newDate: '2030-01-07', newStartTime: '10:00', newEndTime: '11:00' }));
+    expect(confirmation.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ title: 'Confirmar reprogramación' }));
+    expect(confirmation.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ title: 'Reserva reprogramada', acknowledgeOnly: true }));
+    expect(component.activeReservationAction()).toBeNull();
+  });
+
+  it('cancelar la confirmación no envía cambios', async () => {
+    confirmation.confirm.and.resolveTo(false);
+    component.openRescheduleModal(reschedulable);
+    component.changeRescheduleStart('10:00');
+    component.rescheduleEndTime.set('11:00');
+    await component.submitReschedule();
+    expect(secretary.rescheduleReservation).not.toHaveBeenCalled();
+    expect(component.activeReservationAction()).not.toBeNull();
+  });
+
+  it('muestra el error del servidor y conserva la selección', async () => {
+    secretary.rescheduleReservation.and.returnValue(throwError(() => ({ error: { message: ['El horario ya está ocupado.', 'Selecciona otro horario.'] } })));
+    component.openRescheduleModal(reschedulable);
+    component.changeRescheduleStart('10:00');
+    component.rescheduleEndTime.set('11:00');
+    await component.submitReschedule();
+    expect(confirmation.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ title: 'No se pudo reprogramar', message: 'El horario ya está ocupado.\nSelecciona otro horario.', acknowledgeOnly: true }));
+    expect(component.rescheduleStartTime()).toBe('10:00');
+    expect(component.activeReservationAction()).not.toBeNull();
+  });
+
+  it('rechaza una hora de fin que atraviesa un bloque ocupado', async () => {
+    component.openRescheduleModal(reschedulable);
+    component.changeRescheduleStart('10:00');
+    component.rescheduleEndTime.set('12:00');
+    await component.submitReschedule();
+    expect(secretary.rescheduleReservation).not.toHaveBeenCalled();
+  });
+
+  it('no duplica solicitudes mientras espera la respuesta', async () => {
+    const pending = new Subject<any>();
+    secretary.rescheduleReservation.and.returnValue(pending);
+    component.openRescheduleModal(reschedulable);
+    component.changeRescheduleStart('10:00');
+    component.rescheduleEndTime.set('11:00');
+    await component.submitReschedule();
+    await component.submitReschedule();
+    component.closeActionModal();
+    expect(secretary.rescheduleReservation).toHaveBeenCalledTimes(1);
+    expect(component.activeReservationAction()).not.toBeNull();
+    pending.next({});
+    pending.complete();
   });
 
   it('cierra modal de acción', () => {

@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientSearchResult, SecretaryService, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
 import { CourtService } from '../../services/court.service';
-import { Court } from '../../models/court.model';
+import { Court, SlotAvailability } from '../../models/court.model';
 
 type SecretaryTab = 'board' | 'validation' | 'manual' | 'cash';
 
@@ -26,7 +26,26 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   errorMsg = signal<string | null>(null);
 
   // Fecha operativa (por defecto hoy)
-  selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
+  selectedDate = signal<string>(this.todayInBolivia());
+  private boardRequestVersion = 0;
+  private checkinRequestVersion = 0;
+
+  todayInBolivia(): string {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/La_Paz' }).format(new Date());
+  }
+
+  selectDate(date: string): void {
+    const parsed = new Date(`${date}T12:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) return;
+    this.selectedDate.set(date);
+    this.onDateChange();
+  }
+
+  moveDate(days: number): void {
+    const date = new Date(`${this.selectedDate()}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    this.selectDate(date.toISOString().slice(0, 10));
+  }
 
   // Tab 1: Tablero Diario & Check-In
   boardData = signal<OperationalBoardOutput | null>(null);
@@ -83,6 +102,9 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   private clientSearchVersion = 0;
 
   ngOnDestroy(): void {
+    this.rescheduleHoursVersion++;
+    this.boardRequestVersion++;
+    this.checkinRequestVersion++;
     this.receiptDetailRequest?.unsubscribe();
     clearTimeout(this.clientSearchTimer);
     this.clientSearchVersion++;
@@ -170,6 +192,73 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   rescheduleStartTime = signal<string>('');
   rescheduleEndTime = signal<string>('');
 
+  rescheduleSlots = signal<SlotAvailability[]>([]);
+  rescheduleHoursLoading = signal(false);
+  rescheduleHoursError = signal('');
+  rescheduleSubmitting = signal(false);
+  private rescheduleHoursVersion = 0;
+  rescheduleStarts = computed(() => this.rescheduleSlots().filter(slot => slot.isAvailable &&
+    new Date(`${this.rescheduleDate()}T${slot.startTime}:00-04:00`).getTime() > Date.now()).map(slot => slot.startTime));
+  rescheduleEnds = computed(() => {
+    const slots = this.rescheduleSlots();
+    const index = slots.findIndex(slot => slot.startTime === this.rescheduleStartTime());
+    const ends: string[] = [];
+    if (index < 0) return ends;
+    let next = this.rescheduleStartTime();
+    for (const slot of slots.slice(index)) {
+      if (!slot.isAvailable || slot.startTime !== next) break;
+      ends.push(slot.endTime);
+      next = slot.endTime;
+    }
+    return ends;
+  });
+
+  private rescheduleNotice(title: string, message: string, danger = false): void {
+    void this.confirmation.confirm({ title, message, danger, acknowledgeOnly: true, confirmText: 'Entendido' });
+  }
+
+  changeRescheduleStart(time: string): void {
+    this.rescheduleStartTime.set(time);
+    this.rescheduleEndTime.set('');
+  }
+
+  loadRescheduleHours(): void {
+    const version = ++this.rescheduleHoursVersion;
+    this.rescheduleStartTime.set('');
+    this.rescheduleEndTime.set('');
+    this.rescheduleSlots.set([]);
+    this.rescheduleHoursError.set('');
+    this.rescheduleHoursLoading.set(false);
+    const action = this.activeReservationAction();
+    const date = this.rescheduleDate();
+    if (!action || action.type !== 'reschedule') return;
+    if (!date || date < this.todayInBolivia()) {
+      this.rescheduleHoursError.set('Selecciona hoy o una fecha futura.');
+      return;
+    }
+    this.rescheduleHoursLoading.set(true);
+    this.secretaryService.getRescheduleAvailability(action.reservation.id, date).subscribe({
+      next: data => {
+        if (version !== this.rescheduleHoursVersion) return;
+        this.rescheduleSlots.set(data.slots || []);
+        this.rescheduleHoursLoading.set(false);
+        if (!this.rescheduleStarts().length) this.rescheduleHoursError.set(data.isOpen ? 'No hay horarios disponibles para esta fecha. Selecciona otro día.' : 'La cancha no atiende en esta fecha. Selecciona otro día.');
+      },
+      error: err => {
+        if (version !== this.rescheduleHoursVersion) return;
+        this.rescheduleHoursLoading.set(false);
+        const message = this.rescheduleErrorMessage(err, 'No se pudieron consultar los horarios. Intenta nuevamente.');
+        this.rescheduleHoursError.set(message);
+        this.rescheduleNotice('No se pudieron cargar los horarios', message, true);
+      },
+    });
+  }
+
+  private rescheduleErrorMessage(error: any, fallback: string): string {
+    const message = error?.error?.message;
+    return Array.isArray(message) ? message.join('\n') : typeof message === 'string' ? message : fallback;
+  }
+
   // Tab 4: Control de Caja
   shiftSummary = signal<ShiftSummaryOutput | null>(null);
   declaredCash = signal<number | null>(null);
@@ -229,9 +318,12 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
 
   // === TABLERO OPERATIVO ===
   loadBoardData(): void {
+    const version = ++this.boardRequestVersion;
+    this.boardData.set(null);
     this.loading.set(true);
     this.secretaryService.getOperationalBoard(this.selectedDate()).subscribe({
       next: (data: any) => {
+        if (version !== this.boardRequestVersion) return;
         if (data) {
           const mapped: OperationalBoardOutput = {
             date: data.date,
@@ -246,6 +338,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: (err) => {
+        if (version !== this.boardRequestVersion) return;
         this.loading.set(false);
         this.showError('Error al cargar el tablero operativo del día.');
       },
@@ -253,6 +346,10 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   }
 
   onDateChange(): void {
+    this.clearAlerts();
+    this.searchResults.set([]);
+    this.activeReservationAction.set(null);
+    this.handleQuickSearch();
     this.declaredCash.set(null);
     this.shiftNotes.set('');
     this.shiftCloseResult.set(null);
@@ -262,6 +359,8 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
 
   // === CHECK-IN RÁPIDO ===
   handleQuickSearch(): void {
+    const version = ++this.checkinRequestVersion;
+    this.searchingCheckin.set(false);
     const q = this.searchQuery().trim();
     if (!q) {
       this.searchResults.set([]);
@@ -269,8 +368,9 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
     }
 
     this.searchingCheckin.set(true);
-    this.secretaryService.quickSearch(q).subscribe({
+    this.secretaryService.quickSearch(q, this.selectedDate()).subscribe({
       next: (results: any[]) => {
+        if (version !== this.checkinRequestVersion) return;
         const mapped = (results || []).map((item) => {
           if (item.reservation) {
             return {
@@ -278,6 +378,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
               clientName: item.clientName || item.client?.fullName || 'Cliente',
               status: item.status || item.reservation.status,
               courtName: item.courtName || `Cancha ${item.reservation.courtId}`,
+              reservationDate: item.reservationDate || item.reservation.reservationDate,
               startTime: item.startTime || item.reservation.startTime,
               endTime: item.endTime || item.reservation.endTime,
               pendingBalance: item.pendingBalance ?? item.reservation.pendingBalance ?? 0,
@@ -296,6 +397,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
+        if (version !== this.checkinRequestVersion) return;
         this.searchingCheckin.set(false);
         this.showError('Error al buscar reserva para check-in.');
       },
@@ -421,45 +523,71 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Abrir modal Reprogramar
-  openRescheduleModal(reservation: any): void {
-    this.activeReservationAction.set({
-      type: 'reschedule',
-      reservation,
-    });
-    this.rescheduleDate.set(reservation.reservationDate || this.selectedDate());
-    this.rescheduleStartTime.set(reservation.startTime || '19:00');
-    this.rescheduleEndTime.set(reservation.endTime || '20:00');
-    this.actionReason.set('Solicitud de reprogramación');
+  // Una reserva confirmada puede reprogramarse una única vez.
+  canReschedule(reservation: { status: string; parentReservationId?: string | null; canBeRescheduled?: boolean; isAuthorized?: boolean; isEntryAuthorized?: boolean }): boolean {
+    return reservation.status === 'CONFIRMED'
+      && !reservation.parentReservationId
+      && !reservation.isAuthorized
+      && !reservation.isEntryAuthorized
+      && reservation.canBeRescheduled !== false;
   }
 
-  submitReschedule(): void {
-    const action = this.activeReservationAction();
-    if (!action) return;
+  openRescheduleModal(reservation: any): void {
+    if (!this.canReschedule(reservation)) {
+      this.rescheduleNotice('No se puede reprogramar', reservation.parentReservationId ? 'Esta reserva ya fue reprogramada. Solo se permite una reprogramación.' : 'Solo se pueden reprogramar reservas confirmadas sin ingreso autorizado.', true);
+      return;
+    }
+    this.activeReservationAction.set({ type: 'reschedule', reservation });
+    const date = reservation.reservationDate || this.selectedDate();
+    this.rescheduleDate.set(date < this.todayInBolivia() ? this.todayInBolivia() : date);
+    this.actionReason.set('Solicitud de reprogramación');
+    this.loadRescheduleHours();
+  }
 
-    this.loading.set(true);
-    this.secretaryService
-      .rescheduleReservation(action.reservation.id, {
-        newDate: this.rescheduleDate(),
-        newStartTime: this.rescheduleStartTime(),
-        newEndTime: this.rescheduleEndTime(),
-        reason: this.actionReason(),
-      })
-      .subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.showSuccess('✅ Reserva reprogramada con éxito.');
-          this.closeActionModal();
-          this.loadBoardData();
-        },
-        error: (err) => {
-          this.loading.set(false);
-          this.showError(err.error?.message || 'Error al reprogramar la reserva.');
-        },
-      });
+  async submitReschedule(): Promise<void> {
+    const action = this.activeReservationAction();
+    if (!action || action.type !== 'reschedule' || this.rescheduleSubmitting()) return;
+    const date = this.rescheduleDate();
+    const start = this.rescheduleStartTime();
+    const end = this.rescheduleEndTime();
+    if (this.rescheduleHoursLoading() || !this.rescheduleStarts().includes(start) || !this.rescheduleEnds().includes(end) || new Date(`${date}T${start}:00-04:00`).getTime() <= Date.now()) {
+      this.rescheduleNotice('Selecciona un horario válido', 'Elige una fecha futura y horas disponibles. La duración mínima es de 30 minutos y todos los bloques deben estar libres.', true);
+      return;
+    }
+    if (date === (action.reservation.reservationDate || this.selectedDate()) && start === action.reservation.startTime?.slice(0, 5) && end === action.reservation.endTime?.slice(0, 5)) {
+      this.rescheduleNotice('El horario no cambió', 'Selecciona una fecha o un horario diferente al original.', true);
+      return;
+    }
+    this.rescheduleSubmitting.set(true);
+    const accepted = await this.confirmation.confirm({
+      title: 'Confirmar reprogramación',
+      message: `La reserva se trasladará al ${date}, de ${start} a ${end}. Se aplicará la tarifa vigente y se conservarán los pagos validados. Esta es la única reprogramación permitida.`,
+      confirmText: 'Reprogramar reserva',
+      cancelText: 'Volver',
+    });
+    if (!accepted) { this.rescheduleSubmitting.set(false); return; }
+    this.secretaryService.rescheduleReservation(action.reservation.id, {
+      newDate: date, newStartTime: start, newEndTime: end, reason: this.actionReason(),
+    }).subscribe({
+      next: () => {
+        this.rescheduleSubmitting.set(false);
+        this.closeActionModal();
+        this.rescheduleNotice('Reserva reprogramada', `Se creó la nueva reserva para el ${date}, de ${start} a ${end}. Los pagos validados se trasladaron y el horario anterior quedó liberado. Esta reserva ya no puede volver a reprogramarse.`);
+        this.loadBoardData();
+        if (this.searchQuery().trim()) this.handleQuickSearch();
+      },
+      error: err => {
+        this.rescheduleSubmitting.set(false);
+        const message = this.rescheduleErrorMessage(err, 'No se pudo confirmar la reprogramación. Revisa la reserva y vuelve a intentarlo.');
+        this.showError(message);
+        this.rescheduleNotice('No se pudo reprogramar', message, true);
+      },
+    });
   }
 
   closeActionModal(): void {
+    if (this.rescheduleSubmitting()) return;
+    this.rescheduleHoursVersion++;
     this.activeReservationAction.set(null);
     this.actionReason.set('');
   }
