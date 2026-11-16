@@ -8,11 +8,13 @@ import { ConfirmationService } from '../../services/confirmation.service';
     <dialog #dialog aria-labelledby="confirmation-title" aria-describedby="confirmation-description"
       (cancel)="$event.preventDefault(); finish(false)">
       @if (confirmation.request(); as request) {
-        <div class="symbol" [class.danger]="request.danger" aria-hidden="true">{{ request.danger ? '!' : '?' }}</div>
+        <div class="symbol" [class.danger]="request.danger" aria-hidden="true">{{ request.danger ? '!' : request.acknowledgeOnly ? '✓' : '?' }}</div>
         <h2 id="confirmation-title">{{ request.title }}</h2>
         <p id="confirmation-description">{{ request.message }}</p>
         <div class="actions">
-          <button type="button" autofocus (click)="finish(false)">{{ request.cancelText || 'Cancelar' }}</button>
+          @if (!request.acknowledgeOnly) {
+            <button type="button" autofocus (click)="finish(false)">{{ request.cancelText || 'Cancelar' }}</button>
+          }
           <button type="button" class="confirm" [class.danger]="request.danger" (click)="finish(true)">
             {{ request.confirmText || 'Confirmar' }}
           </button>

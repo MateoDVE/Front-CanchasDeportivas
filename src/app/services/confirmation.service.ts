@@ -6,6 +6,7 @@ export interface ConfirmationOptions {
   confirmText?: string;
   cancelText?: string;
   danger?: boolean;
+  acknowledgeOnly?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
