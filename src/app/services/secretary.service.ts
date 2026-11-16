@@ -1,3 +1,4 @@
+import { CourtAvailability } from '../models/court.model';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -19,6 +20,9 @@ export interface OperationalCourt {
     advancePaymentAmount: number;
     pendingBalance: number;
     isAuthorized: boolean;
+    canBeRescheduled?: boolean;
+    parentReservationId?: string | null;
+    reservationDate?: string;
   }[];
 }
 
@@ -141,8 +145,9 @@ export class SecretaryService {
   }
 
   // HU-SEC-13: Búsqueda rápida de check-in (por CI o ID)
-  quickSearch(query: string): Observable<any[]> {
-    const params = new HttpParams().set('q', query);
+  quickSearch(query: string, date?: string): Observable<any[]> {
+    let params = new HttpParams().set('q', query);
+    if (date) params = params.set('date', date);
     return this.http.get<any[]>(`${this.baseUrl}/checkin/search`, { params });
   }
 
@@ -185,6 +190,10 @@ export class SecretaryService {
   }
 
   // HU-SEC-20: Reprogramar reserva
+  getRescheduleAvailability(reservationId: string, date: string): Observable<CourtAvailability> {
+    return this.http.get<CourtAvailability>(`${this.baseUrl}/reservations/${reservationId}/reschedule-availability`, { params: { date } });
+  }
+
   rescheduleReservation(reservationId: string, payload: ReschedulePayload): Observable<any> {
     return this.http.post(`${this.baseUrl}/reservations/${reservationId}/reschedule`, payload);
   }
