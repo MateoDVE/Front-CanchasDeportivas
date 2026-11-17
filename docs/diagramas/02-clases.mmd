@@ -1,0 +1,154 @@
+classDiagram
+    direction TB
+    class User {
+        +string id
+        +string name
+        +string email
+        +string phone
+        +string ci
+        +string passwordHash
+        +UserRole role
+        +UserStatus status
+        +Date createdAt
+        +isActive() boolean
+        +activate() void
+        +deactivate() void
+    }
+    class Complex {
+        +number id
+        +string name
+        +string location
+        +string contactInfo
+        +string paymentQrUrl
+        +boolean isActive
+        +activate() void
+        +deactivate() void
+    }
+    class Court {
+        +number id
+        +number complexId
+        +string name
+        +CourtType courtType
+        -number _pricePerHour
+        +boolean isActive
+        +string[] images
+        +pricePerHour number
+        +updatePrice(newPrice) void
+        +activate() void
+        +deactivate() void
+    }
+    class CourtSchedule {
+        +number id
+        +number courtId
+        +number dayOfWeek
+        +string specificDate
+        +string openTime
+        +string closeTime
+    }
+    class CourtIncident {
+        +number id
+        +number courtId
+        +Date startDatetime
+        +Date endDatetime
+        +string reason
+        +Date createdAt
+        +isActiveAt(date) boolean
+    }
+    class Reservation {
+        +string id
+        +string clientId
+        +number courtId
+        +string reservationDate
+        +string startTime
+        +string endTime
+        +number pricePerHour
+        +number totalPrice
+        +number advanceRequired
+        -ReservationStatus _status
+        -Date _expiresAt
+        +string createdBy
+        +string parentReservationId
+        +string cancellationReason
+        +string origin
+        +Date createdAt
+        +ReservationStatus persistedStatus
+        -number paidAmount
+        +boolean isEntryAuthorized
+        +boolean isFinalPaymentPaid
+        +status ReservationStatus
+        +expiresAt Date
+        +pendingBalance number
+        +createTemporal(props)$ Reservation
+        +createManual(props)$ Reservation
+        +applyPaidAmount(amount) void
+        +isExpired() boolean
+        +secondsRemaining() number
+        +markAsPendingValidation() void
+        +confirm() void
+        +cancel(reason) void
+        +expire() void
+        +markFinalPaymentPaid() void
+        +authorizeEntry() void
+        +markNoShow() void
+        +markReprogrammed() void
+    }
+    class Payment {
+        +number id
+        +string reservationId
+        +string originalReservationId
+        +number amount
+        +PaymentType paymentType
+        +PaymentMethod paymentMethod
+        +string receiptImageUrl
+        -PaymentStatus _status
+        -string _handledBy
+        -string _rejectionReason
+        +Date createdAt
+        +Date processedAt
+        +string authorizedBy
+        +string refundReason
+        +status PaymentStatus
+        +handledBy string
+        +rejectionReason string
+        +validate(handledByUserId) void
+        +reject(handledByUserId, reason) void
+    }
+    class CashShift {
+        +number id
+        +string secretaryId
+        +string shiftDate
+        +number totalSystemCash
+        +number totalSystemQr
+        +number totalSystem
+        +number totalDeclaredCash
+        +number difference
+        +string notes
+        -boolean _isClosed
+        -Date _closedAt
+        +Date createdAt
+        +isClosed boolean
+        +closedAt Date
+        +close(totalDeclaredCash, notes) void
+    }
+    class TimeSlot {
+        <<ValueObject>>
+        +string startTime
+        +string endTime
+        -number _durationHours
+        +durationHours number
+        +overlapsWith(otherStart, otherEnd) boolean
+    }
+    Complex "1" -- "0..*" Court : complexId
+    Court "1" -- "0..*" CourtSchedule : courtId
+    Court "1" -- "0..*" CourtIncident : courtId
+    Court "1" -- "0..*" Reservation : courtId
+    User "1" -- "0..*" Reservation : clientId
+    User "1" -- "0..*" Reservation : createdBy
+    Reservation "0..1 padre" -- "0..1 sucesora" Reservation : parentReservationId
+    Reservation "1" -- "0..*" Payment : reservationId
+    Reservation "1" -- "0..*" Payment : originalReservationId
+    User "0..1" -- "0..*" Payment : handledBy
+    User "0..1" -- "0..*" Payment : authorizedBy
+    User "1" -- "0..*" CashShift : secretaryId
+    Reservation ..> TimeSlot : fábricas reciben y usan
+

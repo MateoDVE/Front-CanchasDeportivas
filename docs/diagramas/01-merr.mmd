@@ -1,0 +1,53 @@
+flowchart TB
+    U["USUARIO<br/>nombre, email, teléfono, CI<br/>rol, estado"]
+    UID(["id_usuario · identificador"])
+    UID --- U
+    U === D(("d"))
+    D --- CLI["CLIENTE"]
+    D --- SEC["SECRETARIA"]
+    D --- ADM["ADMINISTRADOR"]
+
+    C["COMPLEJO<br/>nombre, ubicación, contacto, QR"]
+    CID(["id_complejo · identificador"])
+    CID --- C
+    C ---|"0..N"| CONT{contiene}
+    CONT ---|"1..1"| CAN["CANCHA<br/>nombre, precio/hora, activa, portada"]
+    CANID(["id_cancha · identificador"])
+    CANID --- CAN
+    T["TIPO DE CANCHA<br/>código identificador, descripción, activo"] ---|"0..N"| CLA{clasifica}
+    CLA ---|"1..1"| CAN
+    CAN ---|"0..N"| HOR{dispone de}
+    HOR ---|"1..1"| H["HORARIO<br/>id, día semana O fecha<br/>hora apertura, hora cierre"]
+    CAN ---|"0..N"| INC{registra}
+    INC ---|"1..1"| I["INCIDENTE<br/>id, inicio, fin, motivo"]
+    CAN ---|"0..N"| REC{recibe}
+    REC ---|"1..1"| R["RESERVA<br/>fecha, inicio, fin, precio histórico<br/>total, anticipo, estado, origen, expiración"]
+    RID(["id_reserva · identificador"])
+    RID --- R
+    CLI ---|"0..N"| SOL{solicita}
+    SOL ---|"1..1"| R
+    U ---|"0..N"| CRE{crea}
+    CRE ---|"1..1"| R
+    R ---|"0..1 como padre"| REP{reprogramación}
+    REP ---|"0..1 como sucesora"| R
+    R ---|"0..N"| IMP{imputación actual}
+    IMP ---|"1..1"| P["PAGO<br/>id, monto, tipo, método, estado<br/>comprobante, procesamiento, motivo devolución"]
+    R ---|"0..N"| ORI{origen inmutable}
+    ORI ---|"1..1"| P
+    U ---|"0..N"| PRO{procesa}
+    PRO ---|"0..1"| P
+    U ---|"0..N"| AUT{autoriza devolución}
+    AUT ---|"0..1"| P
+    SEC ---|"0..N"| CAJ{responsable de}
+    CAJ ---|"1..1"| CS["CIERRE DE CAJA<br/>id, fecha, total efectivo, total QR<br/>efectivo declarado, diferencia, cierre"]
+    R ---|"0..N"| HIS{tiene historial}
+    HIS ---|"1..1"| E["EVENTO DE RESERVA<br/>id, estado anterior, estado nuevo<br/>instante, motivo"]
+    U ---|"0..N"| ACT{actúa en}
+    ACT ---|"0..1"| E
+    R ---|"0..N"| REL{referenciada por}
+    REL ---|"0..1"| E
+    classDef entity fill:#eaf3ff,stroke:#245a81,color:#142b40;
+    classDef relation fill:#fff3d6,stroke:#aa771c,color:#4b350c;
+    class U,CLI,SEC,ADM,C,CAN,T,H,I,R,P,CS,E entity;
+    class CONT,CLA,HOR,INC,REC,SOL,CRE,REP,IMP,ORI,PRO,AUT,CAJ,HIS,ACT,REL relation;
+
