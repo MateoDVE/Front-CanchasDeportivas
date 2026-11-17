@@ -7,6 +7,14 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:e2e:pw": "playwright test",
+    "test:e2e:reservas": "playwright test --grep @reservas",
+    "test:e2e:reservas:formularios": "playwright test e2e/reservas-formularios.spec.ts",
+    "test:e2e:reservas:estados": "playwright test e2e/reservas-estados.spec.ts",
+    "test:e2e:pw:ui": "playwright test --ui",
+    "test:e2e:pw:report": "playwright show-report",
+    "test:e2e:typecheck": "tsc -p e2e/tsconfig.json",
+    "test:e2e:summary": "node e2e/summarize.mjs",
     "serve:ssr:FrontCanchasDeportivas": "node dist/FrontCanchasDeportivas/server/server.mjs"
   },
   "prettier": {
@@ -43,6 +51,7 @@
     "@angular/build": "^20.3.9",
     "@angular/cli": "^20.3.9",
     "@angular/compiler-cli": "^20.3.0",
+    "@playwright/test": "^1.65.1",
     "@types/express": "^5.0.1",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",
