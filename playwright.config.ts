@@ -26,6 +26,9 @@ export default defineConfig({
   },
   projects: [{
     name: 'chromium',
-    use: { ...devices['Desktop Chrome'], channel: process.env['E2E_CHANNEL'] || 'chrome' },
+    use: {
+      ...devices['Desktop Chrome'],
+      ...(process.env['E2E_CHANNEL'] ? { channel: process.env['E2E_CHANNEL'] } : {}),
+    },
   }],
 });

@@ -48,6 +48,8 @@ IDs disponibles para ejecutar uno por uno:
 | BVA de fecha | BVA-FEC-01, BVA-FEC-02, BVA-FEC-03 |
 | EP complementaria de API | EP-API-01, EP-API-02, EP-API-03, EP-API-04, EP-API-05, EP-API-06, EP-API-07 |
 | Estados | TE-01, TE-02, TE-03, TE-04, TE-05, TE-06 |
+| Pagos — Ostin | PAY-EP-01, PAY-EP-02, PAY-BVA-01-INSUFICIENTE, PAY-BVA-01-EXCESO, PAY-EP-03 |
+| Anulación — Ostin | ANU-EP-01, ANU-BVA-01, ANU-EP-02 |
 
 Para observar el navegador durante un caso:
 
@@ -64,7 +66,10 @@ npm run test:e2e:reservas:formularios
 # Transiciones y eventos de estado; 6 casos
 npm run test:e2e:reservas:estados
 
-# Toda la parte de reservas; 27 casos
+# Pagos y anulación de Ostin
+npm run test:e2e:pw -- --grep '@ostin'
+
+# Toda la suite actual de reservas; 35 casos
 npm run test:e2e:reservas
 ```
 
@@ -74,7 +79,7 @@ npm run test:e2e:reservas
 npm run test:e2e:pw
 ```
 
-Este comando descubre todos los archivos de pruebas dentro de `e2e`, incluidos los que posteriormente agreguen los compañeros. Actualmente ejecuta los mismos 27 casos porque solo está implementada esta parte. No ejecuta las pruebas unitarias de Angular ni las de Jest del backend.
+Este comando descubre todos los archivos de pruebas dentro de `e2e`, incluidos los bloques de Mateo y Ostin. Actualmente lista 35 casos. No ejecuta las pruebas unitarias de Angular ni las de Jest del backend.
 
 La configuración utiliza **un worker**, por lo que los casos se ejecutan uno después de otro. Esto es distinto de seleccionar solamente un caso por su ID.
 
@@ -93,7 +98,7 @@ npm run test:e2e:pw:report
 npm run test:e2e:pw:ui
 ```
 
-Si se ejecuta un solo caso, el reporte y el resumen muestran únicamente ese caso. No presentarlo como una ejecución de los 27. Archivar cada corrida que se quiera conservar antes de iniciar la siguiente.
+Si se ejecuta un solo caso, el reporte y el resumen muestran únicamente ese caso. No presentarlo como una ejecución de los 35. Archivar cada corrida que se quiera conservar antes de iniciar la siguiente.
 
 Para desarrollo rápido en PowerShell: `npx playwright test --grep '@reservas' --grep-invert '@lento'`. Esa ejecución **no** demuestra expiración. La corrida final debe incluir `@lento`, que espera cinco minutos reales más el ciclo del cron. No altera el reloj del backend.
 
@@ -111,6 +116,7 @@ Cada worker usa sus propios datos; un único worker evita conflictos iniciales. 
 
 - `@ui`: acciones del navegador contra el sistema real. Algunas verificaciones auxiliares consultan la API para confirmar persistencia.
 - `@api`: pruebas funcionales complementarias de entradas o eventos inaccesibles en UI; no se presentan como E2E de navegador.
+- `@ostin`: comprobantes, validación de anticipos, pago final y anulación.
 - `@lento`: vencimiento real y comprobación de no expiración de Pendiente.
 - Login y altas de fixture son precondiciones, no casos adicionales contabilizados.
 
@@ -122,4 +128,4 @@ Los screenshots de éxito se adjuntan explícitamente; fallos guardan captura y 
 
 Mateo cubre el selector de reserva y estados. El recorrido activo va de `/court-detail/:id` directamente a `/payment`; `/booking-flow` es una ruta heredada que no se usa en ese recorrido. Los formularios y límites de comprobantes, pago total y anulación detallada corresponden a Ostin; Crear Cancha/Complejo y decisión, a Marcelo.
 
-Los tests TE-01 a TE-05 reutilizan acciones de pago/anulación para verificar transiciones, sin sustituir la matriz EP/BVA de Ostin. Diseño y cobertura: [documento de Mateo](../../docs/ec3/mateo/diseno-y-cobertura.md).
+Los tests TE-01 a TE-05 reutilizan acciones de pago/anulación para verificar transiciones, sin sustituir la matriz EP/BVA de Ostin. Diseño de Ostin: [documento de diseño](../docs/ec3/ostin/diseno-y-cobertura.md). Diseño de Mateo: [documento de Mateo](../docs/ec3/mateo/diseno-y-cobertura.md).
