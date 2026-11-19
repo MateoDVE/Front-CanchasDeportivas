@@ -668,7 +668,7 @@
 <!-- ======================================================== -->
 @if(showNewCourtModal()){
   <div class="modal-backdrop">
-    <button class="modal-close" (click)="showNewCourtModal.set(false)">✕>
+    <div role="dialog" aria-modal="true" aria-label="Nueva cancha" class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Registrar Nueva Cancha</h3>
         <button class="modal-close" (click)="showNewCourtModal.set(false)">✕</button>
@@ -709,7 +709,7 @@
           <button type="submit" [disabled]="loading()" class="btn btn-primary">Registrar Cancha</button>
         </div>
       </form>
-    </button>
+    </div>
   </div>
 }
 

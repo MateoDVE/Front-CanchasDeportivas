@@ -15,7 +15,14 @@
     "test:e2e:pw:report": "playwright show-report",
     "test:e2e:typecheck": "tsc -p e2e/tsconfig.json",
     "test:e2e:summary": "node e2e/summarize.mjs",
-    "serve:ssr:FrontCanchasDeportivas": "node dist/FrontCanchasDeportivas/server/server.mjs"
+    "serve:ssr:FrontCanchasDeportivas": "node dist/FrontCanchasDeportivas/server/server.mjs",
+    "test:e2e:altas": "playwright test --grep @altas",
+    "test:e2e:complejos": "playwright test complejos.spec.ts",
+    "test:e2e:canchas": "playwright test canchas.spec.ts canchas-portada.spec.ts",
+    "test:e2e:decision": "playwright test reservas-decision.spec.ts",
+    "test:e2e:administracion": "playwright test --grep \"@altas|@decision\"",
+    "test:e2e:summary:administracion": "node e2e/summarize.mjs marcelo",
+    "test:e2e:summary:equipo": "node e2e/summarize.mjs equipo"
   },
   "prettier": {
     "printWidth": 100,

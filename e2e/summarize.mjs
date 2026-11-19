@@ -1,12 +1,15 @@
-import { readFileSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync, cpSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
+const scope = process.argv[2] || 'mateo';
+if (!['mateo', 'marcelo', 'equipo'].includes(scope)) throw new Error('Destino inválido');
+const destination = resolve('../docs/ec3', scope);
 const source = resolve('test-results/results.json');
 const report = JSON.parse(readFileSync(source, 'utf8'));
 const run = report.stats.startTime.replace(/[:.]/g, '-');
-const evidenceDirectory = resolve('../docs/ec3/mateo/evidencias', run);
+const evidenceDirectory = resolve(destination, 'evidencias', run);
 mkdirSync(evidenceDirectory, { recursive: true });
 const rows = [];
 function collect(suites) {
@@ -28,7 +31,7 @@ function collect(suites) {
           type: spec.title.includes('@api') ? 'API funcional' : 'UI / sistema real',
           status: result?.status || 'no ejecutado',
           seconds: ((result?.duration || 0) / 1000).toFixed(1),
-          error: result?.error?.message?.replace(/\u001b\[[0-9;]*m/g, '') || '',
+          error: result?.error?.message?.replace(/\u001b\[[0-9;]*m/g, '').replace(/Bearer\s+[A-Za-z0-9_.-]+/g, 'Bearer [REDACTADO]') || '',
           images,
         });
       }
@@ -57,15 +60,12 @@ const metadata = {
   counts, durationSeconds: report.stats.duration / 1000,
   frontendCommit: git(['rev-parse', 'HEAD']), backendCommit: git(['rev-parse', 'HEAD'], '../back-canchas-deportivas'),
   frontendWorkingTree: git(['status', '--short']),
-  suiteSha256: Object.fromEntries([
-    'playwright.config.ts', 'e2e/helpers/app.ts', 'e2e/fixtures/reservas.ts',
-    'e2e/reservas-formularios.spec.ts', 'e2e/reservas-estados.spec.ts',
-  ].map(path => [path, createHash('sha256').update(readFileSync(path)).digest('hex')])),
+  suiteSha256: Object.fromEntries(['playwright.config.ts', ...readdirSync('e2e', { recursive: true }).filter(p => /\.(ts|mjs)$/.test(p)).map(p => `e2e/${p}`)].map(path => [path, createHash('sha256').update(readFileSync(path)).digest('hex')])),
   archive, rows,
 };
 writeFileSync(resolve(archive, 'resumen.json'), JSON.stringify(metadata, null, 2));
 const lines = [
-  '# Reservas — Resultado de ejecución EC3', '',
+  `# ${scope === 'marcelo' ? 'Altas y decisión' : scope === 'equipo' ? 'Equipo' : 'Reservas'} — Resultado de ejecución EC3`, '',
   `Fecha Bolivia: ${metadata.dateBolivia}. Ejecución: ${run}.`, '',
   `Selección: ${counts.selected}; aprobados: ${counts.passed}; fallidos/interrumpidos: ${counts.failed}; omitidos/no ejecutados: ${counts.skipped}.`, '',
   'Estos conteos describen la corrida seleccionada. Un fallo de preparación no prueba un defecto funcional del producto. No sumar corridas previas como casos nuevos.', '',
@@ -76,7 +76,6 @@ const lines = [
   '## Fallos que requieren interpretación', '',
   ...rows.filter(r => r.error).map(r => `### ${r.id}\n\n\`\`\`text\n${r.error}\n\`\`\`\n`),
 ];
-const destination = resolve('../docs/ec3/mateo');
 mkdirSync(destination, { recursive: true });
 writeFileSync(resolve(destination, 'resultado-ultima-ejecucion.md'), lines.join('\n') + '\n');
 console.log(JSON.stringify({ ...counts, archive }, null, 2));

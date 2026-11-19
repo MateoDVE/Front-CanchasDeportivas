@@ -79,7 +79,32 @@ npm run test:e2e:reservas
 npm run test:e2e:pw
 ```
 
-Este comando descubre todos los archivos de pruebas dentro de `e2e`, incluidos los bloques de Mateo y Ostin. Actualmente lista 35 casos. No ejecuta las pruebas unitarias de Angular ni las de Jest del backend.
+Este comando descubre todos los archivos de pruebas dentro de `e2e`, incluidos reservas, pagos/anulación, altas y decisión. Consultar el total actual con `npx playwright test --list --reporter=list`. No ejecuta las pruebas unitarias de Angular ni las de Jest del backend.
+
+### Crear Complejo, Crear Cancha y decisión
+
+```powershell
+# Un caso individual
+npm run test:e2e:pw -- --grep 'EP-F07-001 '
+npm run test:e2e:pw -- --grep 'TD-RS4 ' --headed
+
+# Bloques por separado
+npm run test:e2e:complejos
+npm run test:e2e:canchas
+npm run test:e2e:decision
+
+# Altas de ambas tablas / bloque completo con decisión
+npm run test:e2e:altas
+npm run test:e2e:administracion
+
+# Conservar la corrida de este bloque
+npm run test:e2e:summary:administracion
+
+# Tras ejecutar toda la suite, conservar el reporte del equipo
+npm run test:e2e:summary:equipo
+```
+
+Diseño y evidencia de este bloque en [entrega de altas y decisión](../../docs/ec3/marcelo/README.md). Los comandos no utilizan nombres de integrantes. La limpieza retira las imágenes sintéticas propias después de verificar su persistencia y conserva los registros desactivados. Las consultas de verificación de canchas se limitan al complejo propio para evitar descargar todas las portadas del sistema.
 
 La configuración utiliza **un worker**, por lo que los casos se ejecutan uno después de otro. Esto es distinto de seleccionar solamente un caso por su ID.
 
