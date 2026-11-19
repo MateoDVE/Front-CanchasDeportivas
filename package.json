@@ -22,7 +22,12 @@
     "test:e2e:decision": "playwright test reservas-decision.spec.ts",
     "test:e2e:administracion": "playwright test --grep \"@altas|@decision\"",
     "test:e2e:summary:administracion": "node e2e/summarize.mjs marcelo",
-    "test:e2e:summary:equipo": "node e2e/summarize.mjs equipo"
+    "test:e2e:summary:equipo": "node e2e/summarize.mjs equipo",
+    "test:e2e:pagos": "playwright test reservas-pagos.spec.ts pagos-validaciones.spec.ts comprobantes.spec.ts",
+    "test:e2e:anulacion": "playwright test reservas-anulacion.spec.ts",
+    "test:e2e:motivos": "playwright test pagos-motivos.spec.ts",
+    "test:e2e:pagos-anulacion": "playwright test --grep @ostin",
+    "test:e2e:summary:pagos": "node e2e/summarize.mjs ostin"
   },
   "prettier": {
     "printWidth": 100,

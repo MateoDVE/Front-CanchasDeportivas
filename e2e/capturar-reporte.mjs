@@ -5,6 +5,9 @@ import { chromium, expect } from '@playwright/test';
 import { loadEnvFile } from 'node:process';
 if(existsSync('.env.e2e')) loadEnvFile('.env.e2e');
 const report=JSON.parse(readFileSync('test-results/results.json','utf8'));
+const scope=process.argv[2]||'marcelo';
+if(!['marcelo','ostin','equipo'].includes(scope)) throw new Error('Destino inválido');
+const destination=['ostin','marcelo'].includes(scope)?resolve('docs/ec3',scope):resolve('../docs/ec3',scope);
 const run=report.stats.startTime.replace(/[:.]/g,'-');
 const root=resolve('playwright-report');
 const server=createServer((req,res)=>{
@@ -21,7 +24,7 @@ try {
   const page=await browser.newPage({viewport:{width:1440,height:950}});
   await page.goto(`http://127.0.0.1:${server.address().port}/`);
   await expect(page.getByPlaceholder('Search tests')).toBeVisible();
-  const dir=resolve('../docs/ec3/marcelo/evidencias',run);mkdirSync(dir,{recursive:true});
+  const dir=resolve(destination,'evidencias',run);mkdirSync(dir,{recursive:true});
   await page.screenshot({path:resolve(dir,'reporte-resumen.png')});
   console.log(`Captura del reporte: ${dir}/reporte-resumen.png`);
 } finally {await browser?.close();await new Promise(r=>server.close(r));}

@@ -4,8 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 const scope = process.argv[2] || 'mateo';
-if (!['mateo', 'marcelo', 'equipo'].includes(scope)) throw new Error('Destino inválido');
-const destination = resolve('../docs/ec3', scope);
+if (!['mateo', 'marcelo', 'ostin', 'equipo'].includes(scope)) throw new Error('Destino inválido');
+const destination = ['ostin', 'marcelo'].includes(scope) ? resolve('docs/ec3', scope) : resolve('../docs/ec3', scope);
 const source = resolve('test-results/results.json');
 const report = JSON.parse(readFileSync(source, 'utf8'));
 const run = report.stats.startTime.replace(/[:.]/g, '-');
@@ -15,6 +15,8 @@ const rows = [];
 function collect(suites) {
   for (const suite of suites || []) {
     for (const spec of suite.specs || []) {
+      if (scope === 'ostin' && !spec.title.includes('@ostin')) continue;
+      if (scope === 'marcelo' && !/@altas|@decision/.test(spec.title)) continue;
       for (const test of spec.tests || []) {
         const result = test.results?.at(-1);
         const images = [];
@@ -55,6 +57,8 @@ function git(args, cwd = '.') {
   catch { return 'No disponible'; }
 }
 const metadata = {
+  selection: scope === 'ostin' ? '@ostin (subconjunto del reporte fuente)' : scope === 'marcelo' ? '@altas|@decision (subconjunto del reporte fuente)' : 'todos los casos del reporte fuente',
+  sourceStats: report.stats,
   run, started: report.stats.startTime,
   dateBolivia: new Date(report.stats.startTime).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }),
   counts, durationSeconds: report.stats.duration / 1000,
@@ -63,9 +67,9 @@ const metadata = {
   suiteSha256: Object.fromEntries(['playwright.config.ts', ...readdirSync('e2e', { recursive: true }).filter(p => /\.(ts|mjs)$/.test(p)).map(p => `e2e/${p}`)].map(path => [path, createHash('sha256').update(readFileSync(path)).digest('hex')])),
   archive, rows,
 };
-writeFileSync(resolve(archive, 'resumen.json'), JSON.stringify(metadata, null, 2));
+writeFileSync(resolve(archive, scope === 'ostin' ? 'resumen-pagos.json' : scope === 'marcelo' ? 'resumen-administracion.json' : 'resumen.json'), JSON.stringify(metadata, null, 2));
 const lines = [
-  `# ${scope === 'marcelo' ? 'Altas y decisión' : scope === 'equipo' ? 'Equipo' : 'Reservas'} — Resultado de ejecución EC3`, '',
+  `# ${scope === 'ostin' ? 'Pagos y anulación' : scope === 'marcelo' ? 'Altas y decisión' : scope === 'equipo' ? 'Equipo' : 'Reservas'} — Resultado de ejecución EC3`, '',
   `Fecha Bolivia: ${metadata.dateBolivia}. Ejecución: ${run}.`, '',
   `Selección: ${counts.selected}; aprobados: ${counts.passed}; fallidos/interrumpidos: ${counts.failed}; omitidos/no ejecutados: ${counts.skipped}.`, '',
   'Estos conteos describen la corrida seleccionada. Un fallo de preparación no prueba un defecto funcional del producto. No sumar corridas previas como casos nuevos.', '',
