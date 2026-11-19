@@ -68,7 +68,7 @@ for (const amountDelta of [-0.01, 0.01]) {
   });
 }
 
-test('PAY-EP-03 @reservas @ostin @ui Pago final exacto deja saldo cero', async ({ page, app, browser }, info) => {
+for (const method of ['EFECTIVO', 'QR'] as const) test(`${method === 'EFECTIVO' ? 'PAY-EP-03' : 'PAY-EP-04'} @reservas @ostin @saldo @ui Pago final exacto ${method} deja saldo cero`, async ({ page, app, browser }, info) => {
   const { reservation, confirmedSummary } = await createConfirmedReservation(page, app);
   const context = await browser.newContext({
     storageState: app.secretaryState,
@@ -107,6 +107,7 @@ test('PAY-EP-03 @reservas @ostin @ui Pago final exacto deja saldo cero', async (
     await expect(collectButton).toBeVisible();
     await collectButton.click();
     await secretary.getByLabel('Monto a Cobrar (Bs):').fill(String(confirmedSummary.pendingBalance));
+    if (method === 'QR') await secretary.getByRole('radio', { name: /Código QR/ }).check();
     await secretary.getByRole('button', { name: 'Registrar Cobro', exact: true }).click();
     await expect(secretary.getByRole('heading', { name: 'Cobro de Saldo Restante (75%)' }))
       .toBeHidden({ timeout: 15_000 });
@@ -119,8 +120,8 @@ test('PAY-EP-03 @reservas @ostin @ui Pago final exacto deja saldo cero', async (
     expect(detail.ok()).toBeTruthy();
     const body = await detail.json();
     expect(body.pendingBalance).toBe(0);
-    expect(body.payments.some((payment: { paymentType: string; status: string }) =>
-      payment.paymentType === 'SALDO_FINAL' && payment.status === 'VALIDATED')).toBeTruthy();
+    expect(body.payments.some((payment: { paymentType: string; status: string; paymentMethod: string; amount: number }) =>
+      payment.paymentType === 'SALDO_FINAL' && payment.status === 'VALIDATED' && payment.paymentMethod === method && payment.amount === confirmedSummary.pendingBalance)).toBeTruthy();
     await evidence(secretary, info);
   } finally {
     await context.close();
