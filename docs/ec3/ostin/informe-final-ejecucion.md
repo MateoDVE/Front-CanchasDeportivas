@@ -1,197 +1,36 @@
-# Informe de auditoría y ejecución — EC3 Ostin
+# Informe final de ejecución — Pagos y anulación
 
-**Fecha de elaboración:** 18 de noviembre de 2026
-**Responsabilidad:** Ostin
-**Alcance:** comprobantes, validación del anticipo, pago final y anulación
+## Resultado comprobado
 
-## 1. Resumen ejecutivo
+Corrida `2026-11-19T04-10-41-965Z`, iniciada el 19/11/2026 a las 00:10:41 de Bolivia. Playwright terminó con código 0: **216 aprobadas, 0 fallidas y 0 omitidas**, duración 29 minutos (1739,79 segundos). Se ejecutó con un worker, sin reintentos, incluyendo el vencimiento real.
 
-La responsabilidad de Ostin quedó implementada y auditada sobre el frontend y backend reales.
-Se ejecutaron las pruebas contra servicios locales, usando datos sintéticos aislados y sin
-modificar reglas de negocio ni datos de producción.
+| Selección | Ejecutadas | Aprobadas | Fallidas | Omitidas |
+| --- | --- | --- | --- | --- |
+| Equipo completo | 216 | 216 | 0 | 0 |
+| Pagos y anulación, subconjunto de esa misma corrida | 36 | 36 | 0 | 0 |
 
-Resultado consolidado de las ejecuciones reales:
+El equipo reúne 112 pruebas UI/sistema real y 104 funcionales de API. El bloque de pagos reúne 26 UI y 10 API. No son dos corridas ni deben sumarse sus conteos. Los 29 minutos corresponden al equipo completo.
 
-- **8 casos automatizados** de Ostin.
-- **7 casos aprobados** en ejecuciones reales.
-- **1 caso bloqueado/fallido:** `PAY-EP-03`.
-- **35 casos** descubiertos por Playwright en la suite general.
-- La suite integral de 35 casos **todavía no se ejecutó**.
+## Interpretación
 
-`PAY-EP-03` prepara correctamente la reserva, valida el anticipo, muestra la reserva en
-Secretaría y abre el modal con saldo de **Bs 75**. Sin embargo, el registro del cobro final
-no produce una finalización observable antes del timeout de 90 segundos. El fallo fue
-reproducido después de levantar nuevamente frontend y backend.
+- PAY-EP-03 y PAY-EP-04 verificaron pago exacto en efectivo y QR, pago SALDO_FINAL validado con monto/método correctos y saldo cero. El timeout original quedó resuelto al asociar la etiqueta del monto con su campo mediante `for`/`id`.
+- Los comprobantes JPEG, WebP y PNG se enviaron correctamente. Los casos de archivo ausente, GIF, PDF y exceso de tamaño se bloquearon. Los límites 5242879/5242880/5242881 bytes pasaron.
+- Los motivos vacíos o blancos se rechazaron; uno y dos caracteres permitieron el rechazo/anulación previsto. La anulación no produjo una devolución automática.
+- Los montos y métodos inválidos no crearon pagos ni modificaron el saldo. Subir un comprobante pendiente no se confundió con validar un anticipo.
+- La regresión conjunta pasó las altas, decisiones y transiciones. TE-06 esperó 5,5 minutos: la reserva temporal expiró, liberó el horario y la pendiente se conservó.
 
-## 2. Archivos revisados
+La aprobación demuestra el comportamiento de los casos y precondiciones documentados en este entorno local; no es una medición de cobertura de todas las posibles entradas del sistema.
 
-### Pruebas y configuración
+## Evidencias y reproducción
 
-- `e2e/reservas-pagos.spec.ts`
-- `e2e/reservas-anulacion.spec.ts`
-- `e2e/fixtures/reservas.ts`
-- `e2e/helpers/app.ts`
-- `playwright.config.ts`
-- `e2e/README.md`
-- `.env.e2e` local, sin exponer valores
+- [Detalle estable de los 36 casos y capturas](resultado-corrida-integral.md).
+- [Detalle de los 216 casos](../../../../docs/ec3/equipo/resultado-corrida-integral.md).
+- [Captura del reporte global de Playwright](../../../../docs/ec3/equipo/evidencias/2026-11-19T04-10-41-965Z/reporte-resumen.png), que muestra 216 aprobadas.
+- Archivo local: `FrontCanchasDeportivas/ec3-artifacts/2026-11-19T04-10-41-965Z/`. Incluye HTML, JSON, adjuntos, `resumen.json` global y `resumen-pagos.json` del subconjunto.
+- [Comandos por caso, bloque y suite completa](README.md).
 
-### Frontend
+La comprobación de tipos de la suite y la compilación Angular pasaron. La compilación conserva una advertencia previa de Sass sobre `@import`. Los cambios están locales y no se hizo commit ni publicación.
 
-- `src/app/pages/secretary/secretary-dashboard.ts`
-- `src/app/pages/secretary/secretary-dashboard.html`
-- `src/app/services/secretary.service.ts`
+## Antecedentes conservados
 
-### Backend
-
-- `src/modules/payments/application/use-cases/payment-branches.spec.ts`
-- `register-final-payment.use-case.ts`
-- `validate-advance-payment.use-case.ts`
-- `get-daily-operational-board.use-case.ts`
-- controlador de pagos de Secretaría
-- controladores de reservas de cliente y Secretaría
-
-### Documentación
-
-- `docs/ec3/ostin/diseno-y-cobertura.md`
-- `docs/ec3/ostin/auditoria-y-cierre.md`
-
-## 3. Hallazgos y correcciones realizadas
-
-| Hallazgo | Corrección | Estado |
-|---|---|---|
-| La validación del anticipo usaba accidentalmente la sesión de cliente. | Se utilizó `app.secretary` para consultar y validar el pago pendiente. | Corregido |
-| Se reconstruía el `baseURL` de forma inconsistente. | Se usa el `baseURL` efectivo del proyecto Playwright. | Corregido |
-| PAY-EP-01 esperaba saldo reducido antes de validar el anticipo. | Se documentó y comprobó que mientras el pago está `PENDING_VALIDATION` el saldo permanece en Bs 100. | Corregido |
-| Los casos BVA conservaban el resumen anterior a la validación. | El helper devuelve el resumen posterior a la validación, con saldo real de Bs 75. | Corregido |
-| PAY-EP-02 podía confundirse con una prueba UI. | Está marcado como `@api`, envía comprobante vacío y exige HTTP 400 y estado `TEMPORAL`. | Corregido |
-| La cancelación podía interpretarse como devolución. | Se comprueba que el anticipo permanece `VALIDATED` y no se crea pago `REFUNDED`. | Verificado |
-| PAY-EP-03 no completaba el pago final desde la UI. | Se añadieron esperas por tablero y reserva observable, sin cambiar la regla de negocio. El bloqueo continúa. | Pendiente externo/producto |
-
-## 4. Casos y resultados reales
-
-| ID | Tipo | Resultado | Evidencia/observación |
-|---|---|---|---|
-| `PAY-EP-01` | UI | **Aprobado** | Comprobante válido; estado `PENDING_VALIDATION`. |
-| `PAY-EP-02` | API | **Aprobado** | Comprobante vacío; HTTP 400 y estado `TEMPORAL`. |
-| `PAY-BVA-01-INSUFICIENTE` | API | **Aprobado** | Pago Bs 0,01 inferior; HTTP 400 y saldo sin cambios. |
-| `PAY-BVA-01-EXCESO` | API | **Aprobado** | Pago Bs 0,01 superior; HTTP 400 y saldo sin cambios. |
-| `PAY-EP-03` | UI | **Fallido reproducible** | El modal muestra Bs 75, pero el cobro no finaliza en 90 s. |
-| `ANU-EP-01` | UI | **Aprobado** | Anulación confirmada; anticipo validado sin devolución. |
-| `ANU-BVA-01` | UI | **Aprobado** | Motivo vacío; confirmación no disponible y estado sin cambios. |
-| `ANU-EP-02` | API | **Aprobado** | Segunda anulación rechazada; estado permanece `CANCELLED`. |
-
-La ejecución inicial de las ocho pruebas produjo 4 aprobados y 4 fallos. Tres fallos de
-pagos fueron defectos de expectativas del test y se corrigieron. Después de la corrección,
-la suite de pagos produjo 4 aprobados y PAY-EP-03 falló nuevamente. Las tres pruebas de
-anulación ya habían producido 3 aprobados.
-
-## 5. Evidencias generadas
-
-La primera corrida real archivada se encuentra en:
-
-`ec3-artifacts/2026-11-18T17-24-34-236Z/`
-
-Las ejecuciones posteriores conservaron los artefactos locales de Playwright en:
-
-`test-results/`
-
-Para PAY-EP-03 se generaron:
-
-- capturas de la página cliente;
-- capturas del tablero de Secretaría;
-- captura del modal de cobro con saldo Bs 75;
-- `error-context.md`;
-- `trace.zip`.
-
-Las trazas pueden contener información de sesión. Deben conservarse localmente y revisarse
-antes de compartirlas.
-
-## 6. Preparación y configuración
-
-Se verificó:
-
-- frontend local en `http://localhost:4200`;
-- backend local en `http://localhost:3000`;
-- `.env.e2e` configurado con URLs y `E2E_RUN=true`;
-- uso de Chromium administrado por Playwright cuando no existe Chrome del sistema;
-- un worker de Playwright para evitar conflictos entre datos de prueba;
-- fixture que crea complejo y cancha exclusivos `EC3-Reservas-*`;
-- limpieza que cancela únicamente reservas creadas por la prueba y deshabilita la cancha creada.
-
-No se expusieron credenciales ni se imprimió el contenido del `.env` del backend.
-
-## 7. Validaciones técnicas
-
-Comandos verificados:
-
-```bash
-cd frontend/Front-CanchasDeportivas
-npm run test:e2e:typecheck
-git diff --check
-```
-
-Resultados:
-
-- TypeScript E2E: aprobado.
-- `git diff --check`: aprobado.
-- Pruebas backend `payment-branches.spec.ts`: **28/28 aprobadas**.
-- Playwright descubre **35 casos** en total.
-
-## 8. Comandos de reproducción
-
-### Preparar servicios
-
-```bash
-cd backend/Back-CanchasDeportivas
-npm start
-```
-
-En otra terminal:
-
-```bash
-cd frontend/Front-CanchasDeportivas
-npm start -- --host 0.0.0.0
-```
-
-### Validar y ejecutar Ostin
-
-```bash
-cd frontend/Front-CanchasDeportivas
-npm run test:e2e:typecheck
-npx playwright test e2e/reservas-pagos.spec.ts
-npx playwright test e2e/reservas-anulacion.spec.ts
-```
-
-### Ejecutar un caso específico
-
-```bash
-npx playwright test e2e/reservas-pagos.spec.ts --grep PAY-EP-03
-```
-
-### Suite completa
-
-```bash
-npm run test:e2e:pw
-npm run test:e2e:summary
-```
-
-La suite completa debe ejecutarse por separado y sus resultados no deben mezclarse con los
-de una corrida parcial.
-
-## 9. Pendientes y riesgos
-
-1. Aislar por qué el clic de `Registrar Cobro` no completa PAY-EP-03 desde la UI, aunque el
-   modal y el saldo sean correctos.
-2. Revisar la respuesta de red del endpoint
-   `/api/v1/secretary/reservations/:id/final-payment` durante el bloqueo.
-3. Ejecutar y archivar la suite integral de 35 casos.
-4. No declarar cobertura integral aprobada mientras PAY-EP-03 y la suite de 35 casos estén
-   pendientes.
-5. Mantener los datos sintéticos y no usar producción.
-
-## 10. Conclusión
-
-La responsabilidad de Ostin está automatizada, documentada y parcialmente validada con
-ejecuciones reales. La cobertura aprobada es de **7 de 8 casos de Ostin**. El único bloqueo
-pendiente está identificado con evidencias auténticas y no se ocultó aumentando timeouts,
-eliminando aserciones o alterando reglas de negocio.
+La revisión original obtuvo 7/8: el caso de cobro se detenía antes de enviar la solicitud, al buscar una etiqueta sin asociación. Una corrida enfocada posterior obtuvo 6/7 por un mensaje duplicado que hacía ambiguo un selector; ese selector fue corregido antes de la corrida integral de 216/216. Consultar [auditoría](auditoria-y-cierre.md) y [diagnóstico](resultado-diagnostico-2026-11-19.md). Los resultados anteriores se conservan para trazabilidad y no describen el estado final.
