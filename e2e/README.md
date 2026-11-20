@@ -1,6 +1,46 @@
-# EC3 — Pruebas de reservas
+# EC3 — Guía de ejecución de todas las pruebas del equipo
 
-Pruebas funcionales de caja negra del recorrido **cliente**, con cuentas demo elegidas mediante los botones reales del login. Frontend y backend reales; no se interceptan respuestas ni se escribe directamente en la base de datos.
+Pruebas funcionales de caja negra de reserva del cliente, pagos, anulación, transiciones, Crear Complejo, Crear Cancha y tabla de decisión. Se utilizan las cuentas demo desde el login, frontend y backend reales. Actualización: 20/11/2026.
+
+## Ejecutar todo el equipo, incluida la parte de Marcelo
+
+Con backend y frontend encendidos y `.env.e2e` configurado según la preparación de abajo, ejecutar desde el frontend:
+
+```powershell
+cd "C:\Users\Mateo\Documents\Mateo Tareas\Calidad\FrontCanchasDeportivas"
+
+# Comprobar tipos y listar el inventario sin ejecutar casos
+npm run test:e2e:typecheck
+npm run test:e2e:pw -- --list --reporter=list
+
+# Ejecutar las 216 pruebas: Mateo + Ostin + Marcelo
+npm run test:e2e:pw
+
+# Cuando termine, conservar resultados y capturas antes de otra corrida
+npm run test:e2e:summary:equipo
+npm run test:e2e:summary:administracion
+npm run test:e2e:summary:pagos
+
+# Abrir el reporte HTML: aprobadas, fallidas, omitidas y adjuntos
+npm run test:e2e:pw:report
+```
+
+Los comandos `summary` se ejecutan después de que Playwright termine, incluso si hubo casos fallidos. No ejecutan pruebas: leen y archivan el reporte existente. El resumen de administración extrae los casos de Marcelo de la misma corrida; el de pagos extrae los de Ostin. No sumar esos subconjuntos al total del equipo.
+
+| Responsable / alcance | Casos | Comando |
+| --- | ---: | --- |
+| Mateo: formulario de reserva | 21 | `npm run test:e2e:reservas:formularios` |
+| Mateo: transiciones de estados | 6 | `npm run test:e2e:reservas:estados` |
+| Ostin: pagos, comprobantes, motivos y anulación | 36 | `npm run test:e2e:pagos-anulacion` |
+| Marcelo: Crear Complejo | 62 | `npm run test:e2e:complejos` |
+| Marcelo: Crear Cancha, incluida portada | 87 | `npm run test:e2e:canchas` |
+| Marcelo: tabla de decisión | 4 | `npm run test:e2e:decision` |
+| **Marcelo completo (subtotal)** | **153** | `npm run test:e2e:administracion` |
+| **Equipo completo** | **216** | `npm run test:e2e:pw` |
+
+Inventario comprobado el 20/11/2026 con `--list`. Estos números indican casos disponibles, no resultados de una nueva corrida. Como referencia, la corrida conjunta anterior duró aproximadamente 29 minutos; la duración puede variar. Incluye TE-06, que espera el vencimiento real durante unos 5–6 minutos. No cerrar la terminal durante esa espera.
+
+`test:e2e:reservas` selecciona reservas y pagos/anulación; **no incluye las altas ni la tabla de decisión de Marcelo**. Para todo el equipo usar `test:e2e:pw`.
 
 ## Preparación
 
@@ -10,7 +50,7 @@ Pruebas funcionales de caja negra del recorrido **cliente**, con cuentas demo el
 4. Copiar `.env.e2e.example` a `.env.e2e`; comprobar URLs y colocar `E2E_RUN=true` para el entorno elegido.
 5. Tener Chrome instalado (`E2E_CHANNEL=chrome`) o Edge (`msedge`). La suite no requiere descargar Chromium si se utiliza uno de ellos.
 
-La dependencia Playwright ya estaba agregada por el usuario. Se usa Node 22 y su cargador nativo de `.env`; no se agrega dotenv.
+Se usa Node 22 y su cargador nativo de `.env`. No sobrescribir un `.env.e2e` ya configurado. Si PowerShell bloquea `npm.ps1` o `npx.ps1`, usar `npm.cmd` y `npx.cmd` en los mismos comandos.
 
 ## Ejecutar
 
@@ -81,11 +121,13 @@ npm run test:e2e:pw
 
 Este comando descubre todos los archivos de pruebas dentro de `e2e`, incluidos reservas, pagos/anulación, altas y decisión. Consultar el total actual con `npx playwright test --list --reporter=list`. No ejecuta las pruebas unitarias de Angular ni las de Jest del backend.
 
-### Crear Complejo, Crear Cancha y decisión
+### Parte de Marcelo: Crear Complejo, Crear Cancha y decisión
 
 ```powershell
 # Un caso individual
 npm run test:e2e:pw -- --grep 'EP-F07-001 '
+npm run test:e2e:pw -- --grep 'EP-F08-001 '
+npm run test:e2e:pw -- --grep 'BVA-F08-FILE2 '
 npm run test:e2e:pw -- --grep 'TD-RS4 ' --headed
 
 # Bloques por separado
@@ -104,17 +146,21 @@ npm run test:e2e:summary:administracion
 npm run test:e2e:summary:equipo
 ```
 
-Diseño y evidencia de este bloque en [entrega de altas y decisión](../../docs/ec3/marcelo/README.md). Los comandos no utilizan nombres de integrantes. La limpieza retira las imágenes sintéticas propias después de verificar su persistencia y conserva los registros desactivados. Las consultas de verificación de canchas se limitan al complejo propio para evitar descargar todas las portadas del sistema.
+Diseño y evidencia de este bloque en [entrega de altas y decisión](../docs/ec3/marcelo/README.md). Los comandos no utilizan nombres de integrantes. La limpieza retira las imágenes sintéticas propias después de verificar su persistencia y conserva los registros desactivados. Las consultas de verificación de canchas se limitan al complejo propio para evitar descargar todas las portadas del sistema.
 
 La configuración utiliza **un worker**, por lo que los casos se ejecutan uno después de otro. Esto es distinto de seleccionar solamente un caso por su ID.
 
 ### Ver resultados y conservar evidencias
 
-Después de cualquier selección:
+Después de ejecutar toda la suite (para una selección individual, archivar con `summary:equipo`, que conservará solo los casos de esa corrida):
 
 ```powershell
-# Guardar la corrida antes de que otra ejecución reemplace el reporte
-npm run test:e2e:summary
+# Guardar todos los casos de la corrida actual
+npm run test:e2e:summary:equipo
+
+# Extraer los subconjuntos si participaron en esa corrida
+npm run test:e2e:summary:administracion
+npm run test:e2e:summary:pagos
 
 # Abrir el reporte HTML de la última corrida
 npm run test:e2e:pw:report
@@ -122,6 +168,16 @@ npm run test:e2e:pw:report
 # Abrir la interfaz interactiva para seleccionar y ejecutar casos
 npm run test:e2e:pw:ui
 ```
+
+Destinos de los resúmenes, relativos a `FrontCanchasDeportivas`:
+
+| Comando | Documento generado | Selección |
+| --- | --- | --- |
+| `test:e2e:summary:equipo` | `../docs/ec3/equipo/resultado-ultima-ejecucion.md` | Todos los casos de la corrida fuente |
+| `test:e2e:summary:administracion` | `docs/ec3/marcelo/resultado-ultima-ejecucion.md` | Solo `@altas` o `@decision` |
+| `test:e2e:summary:pagos` | `docs/ec3/ostin/resultado-ultima-ejecucion.md` | Solo `@ostin` |
+
+El archivo completo queda en `ec3-artifacts/<fecha>/`. Su HTML conserva el reporte fuente completo. Los metadatos `resumen.json`, `resumen-administracion.json` y `resumen-pagos.json` guardan los conteos correspondientes sin reemplazarse entre sí. El comando antiguo `test:e2e:summary` escribe en la carpeta de Mateo y no filtra sus casos; para la entrega conjunta usar los comandos explícitos de esta tabla.
 
 Si se ejecuta un solo caso, el reporte y el resumen muestran únicamente ese caso. No presentarlo como una ejecución de toda la suite. Archivar cada corrida que se quiera conservar antes de iniciar la siguiente.
 
@@ -145,7 +201,7 @@ Cada worker usa sus propios datos; un único worker evita conflictos iniciales. 
 - `@lento`: vencimiento real y comprobación de no expiración de Pendiente.
 - Login y altas de fixture son precondiciones, no casos adicionales contabilizados.
 
-Los screenshots de éxito se adjuntan explícitamente; fallos guardan captura y traza. Reporte HTML: `playwright-report/index.html`; resultados estructurados: `test-results/results.json`. `npm run test:e2e:summary` archiva ambas carpetas bajo `ec3-artifacts/<fecha>/` y escribe un resumen en `docs/ec3/mateo/resultado-ultima-ejecucion.md` del workspace. Ejecutarlo después de cada corrida que deba conservarse y antes de otra ejecución.
+Los screenshots de éxito se adjuntan explícitamente; fallos guardan captura y traza. Reporte HTML: `playwright-report/index.html`; resultados estructurados: `test-results/results.json`. `npm run test:e2e:summary:equipo` archiva ambas carpetas bajo `ec3-artifacts/<fecha>/` y escribe el resumen del equipo en la ubicación indicada arriba. Ejecutarlo después de cada corrida que deba conservarse y antes de otra ejecución.
 
 `e2e/tsconfig.json` comprueba únicamente la suite. El runner de Angular incluye `src/**/*.ts`, por lo que no recoge estos tests externos a `src`.
 
