@@ -1,3 +1,4 @@
+import { revealOnPage } from './pagination';
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 import { apiUrl, createFromUi, selectRange, sendReceipt, summary } from './app';
 
@@ -24,6 +25,6 @@ export async function openBoardAction(page: Page, app: { date: string; courtName
   await page.goto('/secretary');
   await page.getByLabel('Fecha operativa:').fill(app.date);
   const court = page.locator('.court-board-card').filter({ has: page.getByRole('heading', { name: app.courtName, exact: true }) });
-  await expect(court).toHaveCount(1);
+  await revealOnPage(page, court, 'Paginación del tablero');
   await court.getByRole('button', { name: action, exact: typeof action === 'string' }).click();
 }

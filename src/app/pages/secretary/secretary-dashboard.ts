@@ -1,8 +1,9 @@
+import { PaginationComponent, pageNumber } from '../../components/pagination/pagination';
 import { ConfirmationService } from '../../services/confirmation.service';
 import { Component, OnInit, OnDestroy, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ClientSearchResult, SecretaryService, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
+import { ClientSearchResult, SecretaryService, OperationalCourt, OperationalBoardOutput, PendingPaymentItem, ShiftSummaryOutput } from '../../services/secretary.service';
 import { CourtService } from '../../services/court.service';
 import { Court, SlotAvailability } from '../../models/court.model';
 
@@ -11,7 +12,7 @@ type SecretaryTab = 'board' | 'validation' | 'manual' | 'cash';
 @Component({
   selector: 'app-secretary-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './secretary-dashboard.html',
   styleUrls: ['./secretary-dashboard.scss', './secretary-cash.scss'],
 })
@@ -52,6 +53,34 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   searchQuery = signal<string>('');
   searchResults = signal<any[]>([]);
   searchingCheckin = signal<boolean>(false);
+
+  readonly pageSize = 10;
+  boardPage = signal(1);
+  searchPage = signal(1);
+  paymentsPage = signal(1);
+  // Una reserva ocupa un registro; una cancha vacía conserva su tarjeta informativa.
+  boardEntries = computed(() => (this.boardData()?.courts ?? []).flatMap(court =>
+    court.reservations.length
+      ? court.reservations.map(reservation => ({ court, reservation: reservation as OperationalCourt['reservations'][number] | null }))
+      : [{ court, reservation: null }]));
+  currentBoardPage = computed(() => pageNumber(this.boardPage(), this.boardEntries().length));
+  pagedCourts = computed(() => {
+    const start = (this.currentBoardPage() - 1) * this.pageSize;
+    const groups = new Map<number, OperationalCourt & { totalSlots: number }>();
+    for (const { court, reservation } of this.boardEntries().slice(start, start + this.pageSize)) {
+      let group = groups.get(court.courtId);
+      if (!group) {
+        group = { ...court, reservations: [], totalSlots: court.reservations.length };
+        groups.set(court.courtId, group);
+      }
+      if (reservation) group.reservations.push(reservation);
+    }
+    return [...groups.values()];
+  });
+  currentSearchPage = computed(() => pageNumber(this.searchPage(), this.searchResults().length));
+  pagedSearchResults = computed(() => this.searchResults().slice((this.currentSearchPage() - 1) * this.pageSize, this.currentSearchPage() * this.pageSize));
+  currentPaymentsPage = computed(() => pageNumber(this.paymentsPage(), this.pendingPayments().length));
+  pagedPayments = computed(() => this.pendingPayments().slice((this.currentPaymentsPage() - 1) * this.pageSize, this.currentPaymentsPage() * this.pageSize));
 
   // Tab 2: Validación de Anticipos
   pendingPayments = signal<PendingPaymentItem[]>([]);
@@ -334,6 +363,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
             courts: data.courts || [],
           };
           this.boardData.set(mapped);
+          this.boardPage.set(this.currentBoardPage());
         }
         this.loading.set(false);
       },
@@ -346,6 +376,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
   }
 
   onDateChange(): void {
+    this.boardPage.set(1);
     this.clearAlerts();
     this.searchResults.set([]);
     this.activeReservationAction.set(null);
@@ -359,6 +390,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
 
   // === CHECK-IN RÁPIDO ===
   handleQuickSearch(): void {
+    this.searchPage.set(1);
     const version = ++this.checkinRequestVersion;
     this.searchingCheckin.set(false);
     const q = this.searchQuery().trim();
@@ -598,6 +630,7 @@ export class SecretaryDashboardComponent implements OnInit, OnDestroy {
     this.secretaryService.getPendingPayments().subscribe({
       next: (payments) => {
         this.pendingPayments.set(payments);
+        this.paymentsPage.set(this.currentPaymentsPage());
         this.loading.set(false);
       },
       error: () => {

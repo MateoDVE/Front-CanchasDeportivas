@@ -911,4 +911,44 @@ describe('MyReservationsComponent', () => {
         ]
       );
   });
+
+  it('pagina después de filtrar y conserva totales y orden entre páginas', () => {
+    component.reservations = Array.from({ length: 23 }, (_, i) => ({ ...confirmed, id: `R${String(i).padStart(3, '0')}` }));
+    expect(component.pagedReservations.length).toBe(10);
+    expect(component.totalCount).toBe(23);
+    const first = component.pagedReservations.map(r => r.id);
+    component.page = 2;
+    expect(component.pagedReservations.length).toBe(10);
+    expect(component.pagedReservations.some(r => first.includes(r.id))).toBeFalse();
+    component.page = 3;
+    expect(component.pagedReservations.length).toBe(3);
+    component.changeFilter('cancelled');
+    expect(component.page).toBe(1);
+    expect(component.pagedReservations).toEqual([]);
+    component.changeFilter('all');
+    component.page = 3;
+    component.reservations = component.reservations.slice(0, 11);
+    expect(component.currentPage).toBe(2);
+    expect(component.pagedReservations.length).toBe(1);
+  });
+
+  it('navega desde los botones y reinicia la página al buscar en la interfaz', () => {
+    const fixture = TestBed.createComponent(MyReservationsComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.reservations = Array.from({ length: 21 }, (_, i) => ({ ...confirmed, id: `P${String(i).padStart(3, '0')}`, courtName: `Cancha ${i}` }));
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelectorAll('.reservation-card').length).toBe(10);
+    (element.querySelector('button[aria-label="Página siguiente"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.page).toBe(2);
+    expect(element.textContent).toContain('Página 2 de 3');
+    const search = element.querySelector('input[maxlength="80"]') as HTMLInputElement;
+    search.value = 'Cancha 20';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.page).toBe(1);
+    expect(element.querySelectorAll('.reservation-card').length).toBe(1);
+    expect((element.querySelector('button[aria-label="Página siguiente"]') as HTMLButtonElement).disabled).toBeTrue();
+  });
 });

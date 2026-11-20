@@ -1,3 +1,4 @@
+import { revealOnPage } from './helpers/pagination';
 import { test, expect } from './fixtures/reservas';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { apiUrl, createFromUi, evidence, selectRange, sendReceipt, summary } from './helpers/app';
@@ -35,7 +36,7 @@ test('ANU-EP-01 @reservas @ostin @ui Secretaría anula una reserva confirmada co
     const court = secretary.locator('.court-board-card').filter({
       has: secretary.getByRole('heading', { name: app.courtName, exact: true }),
     });
-    await expect(court).toHaveCount(1);
+    await revealOnPage(secretary, court, 'Paginación del tablero');
     await court.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await secretary.getByLabel('Motivo / Observación').fill('EC3 Ostin: cancelación solicitada por el cliente');
     await secretary.getByRole('button', { name: 'Confirmar Cancelación', exact: true }).click();
@@ -67,7 +68,7 @@ test('ANU-BVA-01 @reservas @ostin @ui Motivo vacío impide anular', async ({ pag
     const court = secretary.locator('.court-board-card').filter({
       has: secretary.getByRole('heading', { name: app.courtName, exact: true }),
     });
-    await expect(court).toHaveCount(1);
+    await revealOnPage(secretary, court, 'Paginación del tablero');
     await court.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await expect(secretary.getByRole('button', { name: 'Confirmar Cancelación', exact: true })).toBeDisabled();
     await expect.poll(async () => (await summary(app.client, reservation.reservationId)).status).toBe('CONFIRMED');

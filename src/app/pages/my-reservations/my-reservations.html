@@ -47,11 +47,11 @@
   </div>
 
   <div class="flex flex-wrap gap-3 my-4">
-    <label>Buscar cancha o código <input class="border rounded p-2" [(ngModel)]="search" maxlength="80" /></label>
-    <label>Desde <input class="border rounded p-2" type="date" [(ngModel)]="dateFrom" /></label>
-    <label>Hasta <input class="border rounded p-2" type="date" [(ngModel)]="dateTo" /></label>
+    <label>Buscar cancha o código <input class="border rounded p-2" [(ngModel)]="search" (ngModelChange)="resetPage()" maxlength="80" /></label>
+    <label>Desde <input class="border rounded p-2" type="date" [(ngModel)]="dateFrom" (ngModelChange)="resetPage()" /></label>
+    <label>Hasta <input class="border rounded p-2" type="date" [(ngModel)]="dateTo" (ngModelChange)="resetPage()" /></label>
     <label>Ordenar por
-      <select class="border rounded p-2" [(ngModel)]="sortOrder">
+      <select class="border rounded p-2" [(ngModel)]="sortOrder" (ngModelChange)="resetPage()">
         <option value="upcoming">Próximas primero</option>
         <option value="date-desc">Fecha más lejana primero</option>
         <option value="recent">Creación más reciente</option>
@@ -71,8 +71,9 @@
 
   <!-- LISTA DE RESERVAS -->
   @if(!loading && visibleReservations.length > 0) {
+    <app-pagination label="Paginación de mis reservas" unit="reservas" [total]="visibleReservations.length" [page]="currentPage" (pageChange)="page = $event" />
     <div class="reservations">
-      <div class="reservation-card" *ngFor="let r of visibleReservations">
+      <div class="reservation-card" *ngFor="let r of pagedReservations">
         <div class="line" [style.background]="getStatusBadge(r.status).lineColor"></div>
         <div class="content">
           <div class="top">

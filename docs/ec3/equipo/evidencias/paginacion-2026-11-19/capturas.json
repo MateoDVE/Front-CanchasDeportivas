@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-11-19T21:54:30.549Z",
+  "source": "Aplicación local, datos reales existentes; sin interceptar API ni crear reservas",
+  "chosen": {
+    "date": "2026-09-08",
+    "count": 12
+  },
+  "records": [
+    {
+      "file": "01-cliente-pagina-1.png",
+      "description": "Mis reservas: primera página, filtros y total."
+    },
+    {
+      "file": "02-cliente-pagina-2.png",
+      "description": "Mis reservas: segunda página."
+    },
+    {
+      "file": "03-secretaria-tablero-pagina-1.png",
+      "description": "Tablero de secretaría: primera página."
+    },
+    {
+      "file": "04-secretaria-tablero-pagina-2.png",
+      "description": "Tablero de secretaría: segunda página."
+    },
+    {
+      "file": "05-secretaria-anticipos.png",
+      "description": "Bandeja de anticipos en su estado real actual."
+    }
+  ]
+}

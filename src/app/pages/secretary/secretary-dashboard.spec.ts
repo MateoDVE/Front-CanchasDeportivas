@@ -1511,4 +1511,36 @@ describe('SecretaryDashboardComponent', () => {
     expect(component.loading())
       .toBeFalse();
   });
+
+  it('pagina turnos entre canchas sin perder reservas ni modificar totales', () => {
+    const slots = Array.from({ length: 12 }, (_, i) => ({ id: `R${i}` } as any));
+    component.boardData.set({ date: '2030-01-10', totalReservations: 13, confirmedCount: 13, pendingValidationCount: 0, completedCount: 0,
+      courts: [
+        { courtId: 1, courtName: 'A', sportType: 'Futsal', pricePerHour: 100, reservations: slots },
+        { courtId: 2, courtName: 'B', sportType: 'Futsal', pricePerHour: 100, reservations: [{ id: 'R12' } as any] },
+        { courtId: 3, courtName: 'Vacía', sportType: 'Futsal', pricePerHour: 100, reservations: [] },
+      ] });
+    expect(component.pagedCourts()[0].reservations.length).toBe(10);
+    expect(component.pagedCourts()[0].totalSlots).toBe(12);
+    component.boardPage.set(2);
+    expect(component.pagedCourts().flatMap(c => c.reservations).map(r => r.id)).toEqual(['R10', 'R11', 'R12']);
+    expect(component.pagedCourts()[2].courtName).toBe('Vacía');
+    expect(component.boardData()?.totalReservations).toBe(13);
+    component.onDateChange();
+    expect(component.boardPage()).toBe(1);
+  });
+
+  it('ajusta la última página al retirar anticipos y pagina check-in independientemente', () => {
+    component.pendingPayments.set(Array.from({ length: 11 }, (_, i) => ({ paymentId: i } as any)));
+    component.paymentsPage.set(2);
+    expect(component.pagedPayments().map(p => p.paymentId)).toEqual([10]);
+    component.pendingPayments.set(component.pendingPayments().slice(0, 10));
+    expect(component.currentPaymentsPage()).toBe(1);
+    expect(component.pagedPayments().length).toBe(10);
+    component.searchResults.set(Array.from({ length: 12 }, (_, i) => ({ id: i })));
+    component.searchPage.set(2);
+    expect(component.pagedSearchResults().map(r => r.id)).toEqual([10, 11]);
+    component.handleQuickSearch();
+    expect(component.searchPage()).toBe(1);
+  });
 });

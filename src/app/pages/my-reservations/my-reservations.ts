@@ -1,3 +1,4 @@
+import { PaginationComponent, pageNumber } from '../../components/pagination/pagination';
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -9,7 +10,7 @@ import { ClientReservationItem } from '../../models/reservation.model';
 @Component({
   selector: 'app-my-reservations',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './my-reservations.html',
   styleUrls: ['./my-reservations.scss'],
 })
@@ -17,6 +18,15 @@ export class MyReservationsComponent implements OnInit {
   private readonly  router = inject(Router);
   private readonly  reservationService = inject(ReservationService);
   readonly authService = inject(AuthService);
+
+  page = 1;
+  readonly pageSize = 10;
+  get currentPage(): number { return pageNumber(this.page, this.visibleReservations.length, this.pageSize); }
+  get pagedReservations(): ClientReservationItem[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.visibleReservations.slice(start, start + this.pageSize);
+  }
+  resetPage(): void { this.page = 1; }
 
   activeFilter = 'all';
   sortOrder = 'upcoming';
@@ -70,6 +80,7 @@ export class MyReservationsComponent implements OnInit {
     this.reservationService.getMyReservations().subscribe({
       next: (grouped) => {
         this.reservations = [...grouped.upcoming, ...grouped.history];
+        this.page = this.currentPage;
         this.loading = false;
       },
       error: (err) => {
@@ -126,6 +137,7 @@ export class MyReservationsComponent implements OnInit {
 
   changeFilter(filter: string): void {
     this.activeFilter = filter;
+    this.resetPage();
   }
 
   formatCode(id: string): string {

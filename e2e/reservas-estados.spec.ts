@@ -1,3 +1,4 @@
+import { revealOnPage } from './helpers/pagination';
 import { test, expect } from './fixtures/reservas';
 import { apiUrl, chooseDate, createFromUi, evidence, hour, selectRange, sendReceipt, summary } from './helpers/app';
 
@@ -22,7 +23,7 @@ for (const approve of [true, false]) {
       await secretary.goto('/secretary');
       await secretary.getByRole('button', { name: /Validación Anticipos/ }).click();
       const row = secretary.getByRole('row').filter({ hasText: app.courtName });
-      await expect(row).toHaveCount(1);
+      await revealOnPage(secretary, row, 'Paginación de anticipos');
       await row.getByRole('button', { name: approve ? 'Aprobar' : 'Rechazar', exact: true }).click();
       if (approve) {
         await secretary.getByRole('button', { name: 'Validar pago', exact: true }).click();
@@ -73,7 +74,7 @@ test('TE-05 @reservas @ui Confirmado → Cancelado por secretaría', async ({ pa
     await secretary.goto('/secretary');
     await secretary.getByLabel('Fecha operativa:').fill(app.date);
     const court = secretary.locator('.court-board-card').filter({ has: secretary.getByRole('heading', { name: app.courtName, exact: true }) });
-    await expect(court).toHaveCount(1);
+    await revealOnPage(secretary, court, 'Paginación del tablero');
     await court.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await secretary.getByLabel('Motivo / Observación').fill('EC3: transición Confirmado a Cancelado');
     await secretary.getByRole('button', { name: 'Confirmar Cancelación' }).click();

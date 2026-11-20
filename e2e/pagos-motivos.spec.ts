@@ -1,3 +1,4 @@
+import { revealOnPage } from './helpers/pagination';
 import { test, expect } from './fixtures/reservas';
 import { apiUrl, evidence, summary } from './helpers/app';
 import { preparePayment, openBoardAction, paymentDetails } from './helpers/pagos';
@@ -17,7 +18,7 @@ for (const action of ['rechazo', 'anulacion'] as const) {
           await staff.goto('/secretary');
           await staff.getByRole('button', { name: /Validación Anticipos/ }).click();
           const row = staff.getByRole('row').filter({ hasText: app.courtName });
-          await expect(row).toHaveCount(1);
+          await revealOnPage(staff, row, 'Paginación de anticipos');
           await row.getByRole('button', { name: 'Rechazar', exact: true }).click();
           await staff.getByPlaceholder('Ej: La imagen no es legible, monto incorrecto...').fill(reason);
           await staff.getByRole('button', { name: 'Confirmar Rechazo', exact: true }).click();

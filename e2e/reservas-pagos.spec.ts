@@ -1,3 +1,4 @@
+import { revealOnPage } from './helpers/pagination';
 import { test, expect } from './fixtures/reservas';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { apiUrl, createFromUi, evidence, selectRange, sendReceipt, summary } from './helpers/app';
@@ -102,7 +103,7 @@ for (const method of ['EFECTIVO', 'QR'] as const) test(`${method === 'EFECTIVO' 
     const court = secretary.locator('.court-board-card').filter({
       has: secretary.getByRole('heading', { name: app.courtName, exact: true }),
     });
-    await expect(court).toHaveCount(1);
+    await revealOnPage(secretary, court, 'Paginación del tablero');
     const collectButton = court.getByRole('button', { name: /Cobrar Saldo/ });
     await expect(collectButton).toBeVisible();
     await collectButton.click();
